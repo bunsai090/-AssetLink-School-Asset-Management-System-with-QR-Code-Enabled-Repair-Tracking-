@@ -14,7 +14,7 @@ import { sileo } from 'sileo';
 import { format } from 'date-fns';
 import { calculateDeadline } from '@/lib/slaUtils';
 
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'Escalated'];
+const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected'];
 
 export default function PrincipalRepairRequests() {
     const { currentUser } = useAuth();
@@ -24,12 +24,10 @@ export default function PrincipalRepairRequests() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [selected, setSelected] = useState(null);
     const [notes, setNotes] = useState('');
-    const [escalationReason, setEscalationReason] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
     const [maintenanceStaff, setMaintenanceStaff] = useState([]);
     const [scheduledStartDate, setScheduledStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [saving, setSaving] = useState(false);
-    const [escalationAttempted, setEscalationAttempted] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onSnapshot(
@@ -155,21 +153,7 @@ export default function PrincipalRepairRequests() {
         });
     }
 
-    async function handleEscalate() {
-        setEscalationAttempted(true);
-        if (!escalationReason.trim()) {
-            sileo.warning({
-                title: 'Escalation Reason Required',
-                description: 'Please provide a reason before escalating this request to the supervisor.'
-            });
-            return;
-        }
-        await updateRequest(selected.id, 'Escalated', { 
-            escalated_reason: escalationReason,
-            escalated_by_name: currentUser?.full_name,
-            escalated_at: serverTimestamp()
-        });
-    }
+
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -208,8 +192,6 @@ export default function PrincipalRepairRequests() {
                                 onClick={() => { 
                                     setSelected(req); 
                                     setNotes(''); 
-                                    setEscalationReason('');
-                                    setEscalationAttempted(false);
                                     setAssignedTo(req.assigned_to_name || ''); 
                                 }}
                                 className="bg-card rounded-2xl border border-border p-5 hover:shadow-lg hover:border-teal/30 transition-all cursor-pointer group animate-in slide-in-from-bottom-2 duration-300"
@@ -322,29 +304,7 @@ export default function PrincipalRepairRequests() {
                                             </Button>
                                         </div>
 
-                                        <div className="pt-4 space-y-3">
-                                            <div className="space-y-1">
-                                                <Textarea 
-                                                    value={escalationReason} 
-                                                    onChange={e => { setEscalationReason(e.target.value); setEscalationAttempted(false); }} 
-                                                    placeholder="Escalation reason... (required)" 
-                                                    rows={2} 
-                                                    className={`rounded-xl bg-white transition-all ${
-                                                        escalationAttempted && !escalationReason.trim()
-                                                            ? 'border-amber-400 ring-2 ring-amber-300/50 bg-amber-50'
-                                                            : 'border-slate-200'
-                                                    }`}
-                                                />
-                                                {escalationAttempted && !escalationReason.trim() && (
-                                                    <p className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                                                        ⚠ A reason is required to escalate this request.
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Button onClick={handleEscalate} variant="outline" disabled={saving} className="w-full text-[#9333ea] border-[#f3e8ff] bg-[#faf5ff] hover:bg-[#f3e8ff] font-bold h-11 rounded-xl gap-2 uppercase text-[10px] tracking-widest">
-                                                <ArrowUpCircle className="w-4 h-4" /> Escalate
-                                            </Button>
-                                        </div>
+
                                     </div>
                                 )}
 
