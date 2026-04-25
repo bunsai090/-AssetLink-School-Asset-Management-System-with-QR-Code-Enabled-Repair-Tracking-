@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import {
     LayoutDashboard, Package, AlertTriangle, Wrench, BarChart3,
-    School, Menu, X, Bell, LogOut, ChevronRight, Shield, CalendarDays, ShieldAlert
+    School, Menu, X, Bell, LogOut, ChevronRight, Shield, CalendarDays, ShieldAlert, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sileo } from 'sileo';
@@ -18,6 +18,7 @@ const navItems = [
     { path: '/tasks', label: 'My Tasks', icon: Wrench, roles: ['admin', 'maintenance'] },
     { path: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'principal'] },
     { path: '/calendar', label: 'Calendar', icon: CalendarDays, roles: ['admin', 'maintenance', 'principal'] },
+    { path: '/profile', label: 'My Profile', icon: User, roles: ['admin', 'teacher', 'principal', 'maintenance'] },
 ];
 
 export default function Layout() {
@@ -47,12 +48,12 @@ export default function Layout() {
 
             {/* Sidebar */}
             <aside className={cn(
-                "fixed top-0 left-0 h-screen w-64 bg-sidebar z-50 transform transition-transform duration-300 lg:translate-x-0 lg:relative lg:z-auto lg:flex-shrink-0",
+                "fixed top-0 left-0 h-screen w-64 bg-sidebar border-r border-sidebar-border z-50 transform transition-transform duration-300 lg:translate-x-0 lg:relative lg:z-auto lg:flex-shrink-0",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="flex flex-col h-full">
                     {/* Logo */}
-                    <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
+                    <div className="h-20 flex items-center gap-3 px-6 border-b border-sidebar-border flex-shrink-0">
                         <div className="w-9 h-9 rounded-xl bg-teal flex items-center justify-center shadow-sm">
                             <Shield className="w-5 h-5 text-white" />
                         </div>
@@ -66,7 +67,7 @@ export default function Layout() {
                     </div>
 
                     {/* Nav */}
-                    <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+                    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                         {visibleItems.map(({ path, label, icon: Icon }) => {
                             const active = location.pathname === path;
                             return (
@@ -75,57 +76,63 @@ export default function Layout() {
                                     to={path}
                                     onClick={() => setSidebarOpen(false)}
                                     className={cn(
-                                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                                        "flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 group",
                                         active
                                             ? "bg-teal text-white shadow-sm"
                                             : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                                     )}
                                 >
-                                    <Icon className="w-4 h-4 flex-shrink-0" />
+                                    <Icon className="w-5 h-5 flex-shrink-0" />
                                     <span>{label}</span>
-                                    {active && <ChevronRight className="w-3 h-3 ml-auto opacity-70" />}
+                                    {active && <ChevronRight className="w-4 h-4 ml-auto opacity-70" />}
                                 </Link>
                             );
                         })}
                     </nav>
 
                     {/* User */}
-                    <div className="mt-auto px-3 py-4 border-t border-sidebar-border">
-                        <div className="flex items-center gap-3 px-3 py-2">
-                            <div className="w-8 h-8 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs font-bold text-teal">
-                                    {currentUser?.full_name?.[0] || currentUser?.email?.[0] || 'U'}
-                                </span>
+                    <div className="mt-auto px-3 py-4 border-t border-sidebar-border bg-sidebar">
+                        <Link to="/profile" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3.5 px-4 py-3 hover:bg-sidebar-accent rounded-xl transition-all group">
+                            <div className="w-10 h-10 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {currentUser?.photoURL ? (
+                                    <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-sm font-bold text-teal">
+                                        {currentUser?.full_name?.[0] || currentUser?.email?.[0] || 'U'}
+                                    </span>
+                                )}
                             </div>
-                                <div className="flex flex-col min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="text-sm font-bold text-sidebar-foreground leading-tight">{currentUser?.full_name || 'User'}</p>
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-teal bg-teal/10 px-1.5 py-0.5 rounded-full flex-shrink-0">{role}</span>
-                                    </div>
-                                    <p className="text-[10px] text-sidebar-foreground/50 break-all mt-0.5">{currentUser?.email}</p>
+                            <div className="flex flex-col min-w-0">
+                                <div className="flex flex-col gap-1.5">
+                                    <p className="text-base font-bold text-sidebar-foreground leading-tight group-hover:text-teal transition-colors break-words">{currentUser?.full_name || 'User'}</p>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-teal bg-teal/10 px-2 py-0.5 rounded-full w-fit">{role}</span>
                                 </div>
+                            </div>
                             <button
-                                onClick={() => setLogoutModalOpen(true)}
-                                className="text-sidebar-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setLogoutModalOpen(true);
+                                }}
+                                className="text-sidebar-foreground/40 hover:text-destructive transition-colors flex-shrink-0 ml-auto"
                             >
-                                <LogOut className="w-4 h-4" />
+                                <LogOut className="w-5 h-5" />
                             </button>
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-                {/* Top bar */}
-                <header className="h-20 bg-card/50 backdrop-blur-md border-b border-border flex items-center px-4 lg:px-8 gap-4 sticky top-0 z-30">
-                    <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-foreground/60 hover:text-foreground">
-                        <Menu className="w-5 h-5" />
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-50/50">
+                {/* Mobile Top bar */}
+                <header className="lg:hidden h-20 bg-card/50 backdrop-blur-md border-b border-border flex items-center px-4 gap-4 sticky top-0 z-30">
+                    <button onClick={() => setSidebarOpen(true)} className="text-foreground/60 hover:text-foreground">
+                        <Menu className="w-6 h-6" />
                     </button>
-                    <div className="flex-1" />
-                    {/* Bell icon removed per user request */}
+                    <span className="font-bold text-foreground">AssetLink</span>
                 </header>
-                <main className="flex-1 p-4 lg:p-8">
+                <main className="flex-1 p-4 lg:p-10">
                     <Outlet />
                 </main>
             </div>
