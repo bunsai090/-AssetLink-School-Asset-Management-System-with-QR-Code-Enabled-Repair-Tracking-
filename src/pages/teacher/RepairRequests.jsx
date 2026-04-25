@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { sileo } from 'sileo';
 import { format } from 'date-fns';
 
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'Escalated', 'Pending Teacher Verification'];
+const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'Pending Teacher Verification'];
 
 export default function TeacherRepairRequests() {
     const { currentUser } = useAuth();
