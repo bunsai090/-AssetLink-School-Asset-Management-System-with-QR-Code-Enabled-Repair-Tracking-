@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { sileo } from 'sileo';
 import { format } from 'date-fns';
 import { calculateDeadline } from '@/lib/slaUtils';
+import RepairPagination from '@/components/RepairPagination';
 
 const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected'];
 
@@ -23,6 +24,8 @@ export default function PrincipalRepairRequests() {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [selected, setSelected] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
     const [notes, setNotes] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
     const [maintenanceStaff, setMaintenanceStaff] = useState([]);
@@ -66,6 +69,13 @@ export default function PrincipalRepairRequests() {
         const matchStatus = filterStatus === 'all' || r.status === filterStatus;
         return matchSearch && matchStatus;
     });
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, filterStatus]);
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const paginatedRequests = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     async function updateRequest(id, status, extraData = {}) {
         setSaving(true);
@@ -186,7 +196,7 @@ export default function PrincipalRepairRequests() {
                             <p className="font-medium">No repair requests found</p>
                         </div>
                     ) : (
-                        filtered.map(req => (
+                        paginatedRequests.map(req => (
                             <div
                                 key={req.id}
                                 onClick={() => { 
@@ -218,6 +228,12 @@ export default function PrincipalRepairRequests() {
                     )}
                 </div>
             )}
+            
+            <RepairPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
             <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
                 <DialogContent className="sm:max-w-lg rounded-2xl border-none">
