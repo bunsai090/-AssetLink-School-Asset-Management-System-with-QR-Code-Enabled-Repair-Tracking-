@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { format, addHours, parseISO } from 'date-fns';
 import { calculateDeadline, SLA_HOURS } from '@/lib/slaUtils';
 
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'Escalated'];
+const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected'];
 
 export default function RepairRequests() {
     const { currentUser } = useAuth();
@@ -174,9 +174,7 @@ export default function RepairRequests() {
         loadRequests();
     }
 
-    async function handleEscalate() {
-        await updateStatus(selected.id, 'Escalated', { escalated_reason: notes });
-    }
+
 
     const priorityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 
@@ -346,14 +344,7 @@ export default function RepairRequests() {
                                         </div>
                                     </div>
                                 )}
-                                {(role === 'principal' || role === 'admin' || role === 'supervisor') && !['Escalated', 'Completed', 'Rejected'].includes(selected.status) && (
-                                    <div className="space-y-2">
-                                        <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Escalation reason..." rows={2} />
-                                        <Button onClick={handleEscalate} variant="outline" disabled={saving} className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 text-sm">
-                                            <ArrowUpCircle className="w-4 h-4 mr-1" /> Escalate
-                                        </Button>
-                                    </div>
-                                )}
+
                             </div>
                         </div>
                     )}
