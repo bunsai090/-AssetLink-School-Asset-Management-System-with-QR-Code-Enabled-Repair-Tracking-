@@ -206,10 +206,6 @@ const UserProfile = () => {
 
                                 <div className="w-full mt-8 space-y-3">
                                     <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                        <Mail className="w-4 h-4 text-slate-400" />
-                                        <span className="text-sm font-semibold text-slate-600 truncate">{user?.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
                                         <Phone className="w-4 h-4 text-slate-400" />
                                         <span className="text-sm font-semibold text-slate-600">{user?.phone || 'No phone added'}</span>
                                     </div>
@@ -259,6 +255,19 @@ const UserProfile = () => {
                                                     }}
                                                 />
                                             </div>
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                                            <div className="relative group">
+                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                <Input 
+                                                    className="h-14 pl-11 bg-slate-100/70 border-slate-200 rounded-xl font-semibold text-slate-500 cursor-not-allowed select-none focus:outline-none"
+                                                    value={user?.email || ''}
+                                                    disabled
+                                                    readOnly
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 ml-1 font-medium">Email address cannot be changed directly for security reasons.</p>
                                         </div>
                                     </div>
                                     <div className="flex justify-end">
