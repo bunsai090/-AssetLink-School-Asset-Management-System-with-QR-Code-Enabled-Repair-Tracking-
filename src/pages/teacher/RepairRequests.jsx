@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { sileo } from 'sileo';
 import { format } from 'date-fns';
+import RepairPagination from '@/components/RepairPagination';
 
 const STATUSES = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected', 'Pending Teacher Verification'];
 
@@ -21,6 +22,8 @@ export default function TeacherRepairRequests() {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [selected, setSelected] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
     const [verificationFeedback, setVerificationFeedback] = useState('');
     const [saving, setSaving] = useState(false);
 
@@ -86,6 +89,13 @@ export default function TeacherRepairRequests() {
         const matchStatus = filterStatus === 'all' || r.status === filterStatus;
         return matchSearch && matchStatus;
     });
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, filterStatus]);
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const paginatedRequests = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     async function handleVerifyRepair() {
         setSaving(true);
@@ -199,7 +209,7 @@ export default function TeacherRepairRequests() {
                             <p className="text-xs mt-1">Submit a report to see it tracked here.</p>
                         </div>
                     ) : (
-                        filtered.map(req => (
+                        paginatedRequests.map(req => (
                             <div
                                 key={req.id}
                                 onClick={() => setSelected(req)}
@@ -237,6 +247,12 @@ export default function TeacherRepairRequests() {
                     )}
                 </div>
             )}
+            
+            <RepairPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
             <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
                 <DialogContent className="sm:max-w-md rounded-2xl border-none">
