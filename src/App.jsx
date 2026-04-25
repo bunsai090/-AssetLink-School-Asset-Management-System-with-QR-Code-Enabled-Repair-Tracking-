@@ -2,15 +2,17 @@ import { Toaster } from "sileo";
 import { ShieldAlert } from 'lucide-react';
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import LocalLogin from './pages/auth/LocalLogin';
 import LocalRegister from './pages/auth/LocalRegister';
+import LandingPage from './pages/landing/LandingPage';
 import Layout from './components/Layout';
 import DashboardAdmin from './pages/admin/Dashboard';
 import DashboardTeacher from './pages/teacher/Dashboard';
+import UserProfile from './pages/profile/UserProfile';
 import DashboardMaintenance from './pages/maintenance/Dashboard';
 
 import DashboardPrincipal from './pages/principal/Dashboard';
@@ -29,9 +31,16 @@ import MaintenanceCalendar from './pages/maintenance/MaintenanceCalendar';
 import AssetPublic from './pages/public/AssetPublic';
 import RepairReportPublic from './pages/public/RepairReportPublic';
 
+console.log("--- ASSETLINK APP REFRESHED: VERSION 2.0 ---");
+
 const AuthenticatedApp = () => {
     const { currentUser, isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
     const role = currentUser?.role || 'teacher';
+
+    // Auto-redirect authenticated users away from auth pages
+    if (currentUser && (window.location.pathname === '/login' || window.location.pathname === '/register')) {
+        return <Navigate to="/" replace />;
+    }
 
     // Show loading spinner
     if (isLoadingPublicSettings || isLoadingAuth) {
@@ -46,9 +55,10 @@ const AuthenticatedApp = () => {
     if (!currentUser) {
         return (
             <Routes>
-                <Route path="/" element={<LocalLogin />} />
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LocalLogin />} />
                 <Route path="/register" element={<LocalRegister />} />
-                <Route path="*" element={<LocalLogin />} />
+                <Route path="*" element={<LandingPage />} />
             </Routes>
         );
     }
@@ -80,7 +90,6 @@ const AuthenticatedApp = () => {
     // Role-based Dashboard selection
     const renderDashboard = () => {
         if (role === 'maintenance') return <DashboardMaintenance />;
-
         if (role === 'teacher') return <DashboardTeacher />;
         if (role === 'principal') return <DashboardPrincipal />;
         return <DashboardAdmin />;
@@ -92,13 +101,8 @@ const AuthenticatedApp = () => {
         return <RepairRequestsTeacher />;
     };
 
-    // Render the main app
     return (
         <Routes>
-            {/* Auth routes accessible even when logged in (for testing/easy navigation) */}
-            <Route path="/login" element={<LocalLogin />} />
-            <Route path="/register" element={<LocalRegister />} />
-            
             <Route element={<Layout />}>
                 <Route path="/" element={renderDashboard()} />
                 <Route path="/assets" element={<Assets />} />
@@ -107,6 +111,7 @@ const AuthenticatedApp = () => {
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/calendar" element={<MaintenanceCalendar />} />
+                <Route path="/profile" element={<UserProfile />} />
                 <Route path="/asset-view" element={<AssetPublic />} />
                 <Route path="*" element={<PageNotFound />} />
             </Route>
