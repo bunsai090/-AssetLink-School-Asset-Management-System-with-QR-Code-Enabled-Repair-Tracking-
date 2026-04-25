@@ -43,13 +43,13 @@ export const AuthProvider = ({ children }) => {
                         });
                         setIsAuthenticated(true);
                     } else {
-                        // If no firestore doc, we set basic info but mark as not registered for safety
-                        setUser({
-                            uid: firebaseUser.uid,
-                            email: firebaseUser.email,
-                            role: 'teacher' // Default fallback or handle error
+                        // If no firestore doc, we treat them as not registered
+                        setUser(null);
+                        setIsAuthenticated(false);
+                        setAuthError({ 
+                            type: 'user_not_registered', 
+                            message: 'Your account is not registered. Please sign up first.' 
                         });
-                        setIsAuthenticated(true);
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
