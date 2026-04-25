@@ -35,7 +35,7 @@ export default function PrincipalDashboard() {
     }
 
     const pendingApproval = requests.filter(r => r.status === 'Pending');
-    const escalated = requests.filter(r => r.status === 'Escalated');
+
     const inProgress = requests.filter(r => r.status === 'In Progress');
     const completed = requests.filter(r => r.status === 'Completed');
 
@@ -59,7 +59,7 @@ export default function PrincipalDashboard() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatsCard title="Awaiting Approval" value={pendingApproval.length} subtitle="Need your action" icon={Clock} color="amber" />
                 <StatsCard title="In Progress" value={inProgress.length} subtitle="Assigned to staff" icon={Wrench} color="blue" />
-                <StatsCard title="Escalated" value={escalated.length} subtitle="Needs higher authority" icon={AlertTriangle} color="red" />
+
                 <StatsCard title="Completed" value={completed.length} subtitle="Resolved repairs" icon={CheckCircle} color="green" />
             </div>
             {/* Pending approval list */}
@@ -96,7 +96,7 @@ export default function PrincipalDashboard() {
             <div className="bg-card rounded-2xl border border-border p-6">
                 <h2 className="text-base font-semibold text-foreground mb-4">Overall Progress</h2>
                 <div className="space-y-3">
-                    {[{ label: 'Pending', count: pendingApproval.length, color: 'bg-amber-400' }, { label: 'In Progress', count: inProgress.length, color: 'bg-blue-400' }, { label: 'Completed', count: completed.length, color: 'bg-emerald-400' }, { label: 'Escalated', count: escalated.length, color: 'bg-purple-400' }].map(({ label, count, color }) => (
+                    {[{ label: 'Pending', count: pendingApproval.length, color: 'bg-amber-400' }, { label: 'In Progress', count: inProgress.length, color: 'bg-blue-400' }, { label: 'Completed', count: completed.length, color: 'bg-emerald-400' }].map(({ label, count, color }) => (
                         <div key={label}>
                             <div className="flex justify-between text-sm mb-1"><span className="text-muted-foreground">{label}</span><span className="font-medium">{count}</span></div>
                             <div className="h-2 bg-muted rounded-full overflow-hidden">
