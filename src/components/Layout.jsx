@@ -132,7 +132,7 @@ export default function Layout() {
                     </button>
                     <span className="font-bold text-foreground">AssetLink</span>
                 </header>
-                <main className="flex-1 p-4 lg:p-10">
+                <main className="flex-1 p-4 lg:p-6">
                     <Outlet />
                 </main>
             </div>
