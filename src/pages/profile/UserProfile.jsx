@@ -7,29 +7,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-    User, 
-    Mail, 
-    Phone, 
-    Lock, 
-    Camera, 
-    Save, 
-    Loader2, 
-    ArrowLeft,
-    Shield
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
+import {
+    User,
+    Mail,
+    Phone,
+    Lock,
+    Camera,
+    Save,
+    Loader2,
+    Shield,
+    Eye,
+    EyeOff,
+    CheckCircle,
+    CircleDot,
+    KeyRound
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    
+
     const [formData, setFormData] = useState({
         fullName: user?.full_name || '',
         phoneNumber: user?.phone || '',
@@ -40,6 +45,9 @@ const UserProfile = () => {
         confirmPassword: '',
     });
 
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const handleInfoUpdate = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -49,7 +57,7 @@ const UserProfile = () => {
                 full_name: formData.fullName,
                 phone: formData.phoneNumber
             });
-            
+
             await updateProfile(auth.currentUser, {
                 displayName: formData.fullName
             });
@@ -68,7 +76,7 @@ const UserProfile = () => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             return toast.error("Passwords do not match!");
         }
-        
+
         setIsLoading(true);
         try {
             await updatePassword(auth.currentUser, passwordData.newPassword);
@@ -92,7 +100,7 @@ const UserProfile = () => {
 
         setIsUploading(true);
         setUploadProgress(0);
-        
+
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
         const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -150,188 +158,258 @@ const UserProfile = () => {
         }
     };
 
+    const initials = user?.full_name
+        ?.split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'U';
+
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-20">
-            <div className="h-48 bg-[#028a0f] relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
-                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-black rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
-                </div>
-                <div className="container mx-auto px-6 h-full flex items-end pb-6">
-                    <Button 
-                        variant="ghost" 
-                        onClick={() => navigate(-1)}
-                        className="absolute top-6 left-6 text-white hover:bg-white/10"
-                    >
-                        <ArrowLeft className="w-5 h-5 mr-2" /> Back
-                    </Button>
-                </div>
+        <div className="space-y-8 animate-fade-in pb-12">
+            {/* ── Page Header ────────────────────────────── */}
+            <div className="space-y-1">
+                <h1 className="text-3xl font-black text-foreground tracking-tight">My Profile</h1>
+                <p className="text-sm text-muted-foreground">Manage your account settings and personal information.</p>
             </div>
 
-            <div className="container mx-auto px-6 -mt-16 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="space-y-6">
-                        <Card className="border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
-                            <CardContent className="pt-10 pb-8 flex flex-col items-center">
-                                <div className="relative group">
-                                    <div className="w-32 h-32 rounded-3xl bg-slate-100 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-                                        {user?.photoURL ? (
-                                            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User className="w-16 h-16 text-slate-300" />
-                                        )}
-                                        {isUploading && (
-                                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-3xl z-10">
-                                                <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
-                                                <span className="text-white text-[10px] font-black uppercase tracking-widest">{uploadProgress}%</span>
-                                            </div>
-                                        )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ── Left: Profile Card ──────────────────── */}
+                <div className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
+                        <CardContent className="pt-8 pb-6 flex flex-col items-center">
+                            {/* Avatar */}
+                            <div className="relative group">
+                                <Avatar className="w-28 h-28 border-4 border-background shadow-lg">
+                                    <AvatarImage src={user?.photoURL} alt={user?.full_name} />
+                                    <AvatarFallback className="text-2xl font-black bg-[#028a0f]/10 text-[#028a0f]">
+                                        {initials}
+                                    </AvatarFallback>
+                                </Avatar>
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-full z-10">
+                                        <Loader2 className="w-6 h-6 text-white animate-spin mb-1" />
+                                        <span className="text-white text-[9px] font-black">{uploadProgress}%</span>
                                     </div>
-                                    <button 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isUploading}
-                                        className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#028a0f] text-white rounded-xl border-4 border-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                                )}
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#028a0f] text-white rounded-full border-4 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                                >
+                                    <Camera className="w-4 h-4" />
+                                </button>
+                                <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                            </div>
+
+                            {/* Info */}
+                            <div className="text-center mt-5 space-y-2">
+                                <h2 className="text-xl font-black text-foreground tracking-tight">{user?.full_name}</h2>
+                                <Badge variant="outline" className="bg-[#028a0f]/10 text-[#028a0f] border-[#028a0f]/20 font-bold text-[10px] uppercase tracking-widest px-3">
+                                    {user?.role}
+                                </Badge>
+                            </div>
+
+                            <Separator className="my-6 w-full" />
+
+                            {/* Quick Info */}
+                            <div className="w-full space-y-2">
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/40 transition-colors">
+                                    <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-sm font-medium text-foreground truncate">{user?.email}</span>
+                                </div>
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/40 transition-colors">
+                                    <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {user?.phone || 'No phone added'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/40 transition-colors">
+                                    <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-sm font-medium text-foreground capitalize">{user?.role} Access</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Account Status Card */}
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                </div>
+                                <CardTitle className="text-sm font-bold">Account Status</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <Separator />
+                        <CardContent className="pt-4 space-y-3">
+                            {[
+                                { label: 'Email Verified', value: auth.currentUser?.emailVerified ? 'Yes' : 'No', color: auth.currentUser?.emailVerified ? 'text-emerald-600' : 'text-amber-600' },
+                                { label: 'Auth Provider', value: auth.currentUser?.providerData?.[0]?.providerId === 'google.com' ? 'Google' : 'Email', color: 'text-foreground' },
+                                { label: 'Account Role', value: user?.role, color: 'text-[#028a0f]' },
+                            ].map(({ label, value, color }) => (
+                                <div key={label} className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <CircleDot className="w-3 h-3 text-muted-foreground/40" />
+                                        <span className="text-xs text-muted-foreground font-medium">{label}</span>
+                                    </div>
+                                    <span className={`text-xs font-black capitalize ${color}`}>{value}</span>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* ── Right: Forms ────────────────────────── */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Personal Information */}
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                                    <User className="w-4 h-4 text-blue-600" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-base font-bold">Personal Information</CardTitle>
+                                    <CardDescription>Update your display name and contact details.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <Separator />
+                        <CardContent className="pt-6">
+                            <form onSubmit={handleInfoUpdate} className="space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name</Label>
+                                        <div className="relative group">
+                                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#028a0f] transition-colors" />
+                                            <Input
+                                                className="h-12 pl-10 rounded-xl border-border focus:border-[#028a0f] font-medium"
+                                                value={formData.fullName}
+                                                onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phone Number</Label>
+                                        <div className="relative group">
+                                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#028a0f] transition-colors" />
+                                            <Input
+                                                className="h-12 pl-10 rounded-xl border-border focus:border-[#028a0f] font-medium"
+                                                placeholder="09XXXXXXXXX"
+                                                value={formData.phoneNumber}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length <= 11) setFormData({...formData, phoneNumber: val});
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</Label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                                            <Input
+                                                className="h-12 pl-10 rounded-xl bg-muted/50 border-border/50 font-medium text-muted-foreground cursor-not-allowed"
+                                                value={user?.email || ''}
+                                                disabled
+                                                readOnly
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground/70 ml-1 font-medium">
+                                            Email cannot be changed for security reasons.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="h-11 px-6 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl shadow-sm gap-2"
                                     >
-                                        <Camera className="w-5 h-5" />
-                                    </button>
-                                    <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                        Save Changes
+                                    </Button>
                                 </div>
+                            </form>
+                        </CardContent>
+                    </Card>
 
-                                <div className="text-center mt-6">
-                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user?.full_name}</h2>
-                                    <Badge className="mt-2 bg-green-100 text-[#028a0f] border-0 font-bold px-3 py-1 uppercase text-[10px] tracking-widest">
-                                        {user?.role}
-                                    </Badge>
+                    {/* Account Security */}
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                                    <KeyRound className="w-4 h-4 text-amber-600" />
                                 </div>
-
-                                <div className="w-full mt-8 space-y-3">
-                                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                        <Phone className="w-4 h-4 text-slate-400" />
-                                        <span className="text-sm font-semibold text-slate-600">{user?.phone || 'No phone added'}</span>
-                                    </div>
+                                <div>
+                                    <CardTitle className="text-base font-bold">Account Security</CardTitle>
+                                    <CardDescription>Keep your account secure by using a strong password.</CardDescription>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="lg:col-span-2 space-y-8">
-                        <Card className="border-slate-100 shadow-xl shadow-slate-200/50">
-                            <CardHeader className="border-b border-slate-50 pb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-[#028a0f]">
-                                        <User className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Personal Information</CardTitle>
-                                        <CardDescription>Update your display name and contact details.</CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pt-8">
-                                <form onSubmit={handleInfoUpdate} className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                                            <div className="relative group">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#028a0f] transition-colors" />
-                                                <Input 
-                                                    className="h-14 pl-11 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-semibold"
-                                                    value={formData.fullName}
-                                                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                                            <div className="relative group">
-                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#028a0f] transition-colors" />
-                                                <Input 
-                                                    className="h-14 pl-11 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-semibold"
-                                                    placeholder="09XXXXXXXXX"
-                                                    value={formData.phoneNumber}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/\D/g, '');
-                                                        if (val.length <= 11) setFormData({...formData, phoneNumber: val});
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                                            <div className="relative group">
-                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                <Input 
-                                                    className="h-14 pl-11 bg-slate-100/70 border-slate-200 rounded-xl font-semibold text-slate-500 cursor-not-allowed select-none focus:outline-none"
-                                                    value={user?.email || ''}
-                                                    disabled
-                                                    readOnly
-                                                />
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 ml-1 font-medium">Email address cannot be changed directly for security reasons.</p>
+                            </div>
+                        </CardHeader>
+                        <Separator />
+                        <CardContent className="pt-6">
+                            <form onSubmit={handlePasswordUpdate} className="space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">New Password</Label>
+                                        <div className="relative group">
+                                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#028a0f] transition-colors" />
+                                            <Input
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                className="h-12 pl-10 pr-11 rounded-xl border-border focus:border-[#028a0f] font-medium"
+                                                placeholder="Enter new password"
+                                                value={passwordData.newPassword}
+                                                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(p => !p)}
+                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[#028a0f] transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex justify-end">
-                                        <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl shadow-lg gap-2 transition-all active:scale-95">
-                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                            Save Changes
-                                        </Button>
-                                    </div>
-                                </form>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-slate-100 shadow-xl shadow-slate-200/50">
-                            <CardHeader className="border-b border-slate-50 pb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
-                                        <Lock className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Account Security</CardTitle>
-                                        <CardDescription>Keep your account secure by using a strong password.</CardDescription>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Confirm Password</Label>
+                                        <div className="relative group">
+                                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#028a0f] transition-colors" />
+                                            <Input
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                className="h-12 pl-10 pr-11 rounded-xl border-border focus:border-[#028a0f] font-medium"
+                                                placeholder="Confirm password"
+                                                value={passwordData.confirmPassword}
+                                                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(p => !p)}
+                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[#028a0f] transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="pt-8">
-                                <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
-                                            <div className="relative group">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#028a0f] transition-colors" />
-                                                <Input 
-                                                    type="password"
-                                                    className="h-14 pl-11 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-semibold"
-                                                    placeholder="Enter new password"
-                                                    value={passwordData.newPassword}
-                                                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm New Password</label>
-                                            <div className="relative group">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#028a0f] transition-colors" />
-                                                <Input 
-                                                    type="password"
-                                                    className="h-14 pl-11 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-semibold"
-                                                    placeholder="Confirm new password"
-                                                    value={passwordData.confirmPassword}
-                                                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <Button type="submit" disabled={isLoading || !passwordData.newPassword} className="h-12 px-8 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-lg gap-2 transition-all active:scale-95">
-                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
-                                            Update Password
-                                        </Button>
-                                    </div>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button
+                                        type="submit"
+                                        disabled={isLoading || !passwordData.newPassword}
+                                        variant="outline"
+                                        className="h-11 px-6 font-bold rounded-xl gap-2 border-border"
+                                    >
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+                                        Update Password
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
