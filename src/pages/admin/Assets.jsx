@@ -3,16 +3,28 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/lib/AuthContext';
 import StatusBadge from '../../components/StatusBadge';
-import { Package, Plus, Search, QrCode, Edit2, Trash2, Printer, CheckSquare, Square, X } from 'lucide-react';
+import { Package, Plus, Search, QrCode, Edit2, Trash2, Printer, CheckSquare, Square, X, Tag, Hash, Layers, ShieldCheck, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { sileo } from 'sileo';
 
 const CATEGORIES = ['Furniture', 'Electronics', 'Laboratory Equipment', 'Sports Equipment', 'Books & Materials', 'Appliances', 'Structural', 'Other'];
 const CONDITIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Damaged', 'Condemned'];
+
+const CONDITION_COLORS = {
+    Excellent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    Good: 'bg-teal/5 text-teal border-teal/20',
+    Fair: 'bg-amber-50 text-amber-700 border-amber-200',
+    Poor: 'bg-orange-50 text-orange-700 border-orange-200',
+    Damaged: 'bg-red-50 text-red-700 border-red-200',
+    Condemned: 'bg-slate-100 text-slate-600 border-slate-300',
+};
 
 export default function Assets() {
     const { currentUser } = useAuth();
@@ -24,7 +36,7 @@ export default function Assets() {
     const [filterCondition, setFilterCondition] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: '', asset_code: '', category: 'Furniture', condition: 'Good', location: '', school_name: '', description: '' });
+    const [form, setForm] = useState({ name: '', asset_code: '', category: 'Furniture', condition: 'Good', school_name: '', description: '' });
     const [saving, setSaving] = useState(false);
     const [selected, setSelected] = useState(new Set());
     const [selectMode, setSelectMode] = useState(false);
@@ -147,13 +159,13 @@ export default function Assets() {
 
     function openCreate() {
         setEditing(null);
-        setForm({ name: '', asset_code: '', category: 'Furniture', condition: 'Good', location: '', school_name: '', description: '' });
+        setForm({ name: '', asset_code: '', category: 'Furniture', condition: 'Good', school_name: '', description: '' });
         setShowModal(true);
     }
 
     function openEdit(asset) {
         setEditing(asset);
-        setForm({ name: asset.name, asset_code: asset.asset_code, category: asset.category, condition: asset.condition, location: asset.location || '', school_name: asset.school_name || '', description: asset.description || '' });
+        setForm({ name: asset.name, asset_code: asset.asset_code, category: asset.category, condition: asset.condition, school_name: asset.school_name || '', description: asset.description || '' });
         setShowModal(true);
     }
 
@@ -295,47 +307,165 @@ export default function Assets() {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Asset Registration Modal */}
             <Dialog open={showModal} onOpenChange={setShowModal}>
-                <DialogContent className="sm:max-w-md rounded-2xl border-none">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-black uppercase tracking-tight">{editing ? 'Edit Asset Record' : 'Assign New Asset'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-5 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2 space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Asset Designation</Label>
-                                <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Smart TV - Grade 10" className="h-11 rounded-xl" />
+                <DialogContent className="sm:max-w-[480px] p-0 gap-0 rounded-2xl border border-border/50 shadow-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="px-6 pt-6 pb-4">
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
+                                <Package className="w-5 h-5 text-teal" />
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Asset Code</Label>
-                                <Input value={form.asset_code} onChange={e => setForm({ ...form, asset_code: e.target.value })} placeholder="TV-10A" className="h-11 rounded-xl" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Category</Label>
-                                <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
-                                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Condition</Label>
-                                <Select value={form.condition} onValueChange={v => setForm({ ...form, condition: v })}>
-                                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Room / Location</Label>
-                                <Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="Room 204" className="h-11 rounded-xl" />
+                            <div>
+                                <DialogHeader className="p-0 space-y-0">
+                                    <DialogTitle className="text-lg font-bold tracking-tight text-foreground">
+                                        {editing ? 'Edit Asset' : 'Register New Asset'}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                                        {editing ? 'Update the details for this asset record.' : 'Add a new asset to the school inventory.'}
+                                    </DialogDescription>
+                                </DialogHeader>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                        <Button onClick={handleSave} disabled={saving} className="h-12 bg-teal hover:bg-teal/90 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-teal/20 transition-all active:scale-95">
-                            {saving ? 'Processing...' : (editing ? 'Apply Changes' : 'Register Asset')}
+
+                    <Separator />
+
+                    {/* Form Body */}
+                    <div className="px-6 py-5 space-y-5">
+                        {/* Asset Designation */}
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5" />
+                                Asset Designation
+                            </Label>
+                            <Input
+                                value={form.name}
+                                onChange={e => setForm({ ...form, name: e.target.value })}
+                                placeholder="e.g. Smart TV - Grade 10"
+                                className="h-10 rounded-lg bg-muted/40 border-border/60 focus-visible:bg-background transition-colors"
+                            />
+                        </div>
+
+                        {/* Asset Code + Category Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                    <Hash className="w-3.5 h-3.5" />
+                                    Asset Code
+                                </Label>
+                                <Input
+                                    value={form.asset_code}
+                                    onChange={e => setForm({ ...form, asset_code: e.target.value })}
+                                    placeholder="TV-10A"
+                                    className="h-10 rounded-lg bg-muted/40 border-border/60 focus-visible:bg-background transition-colors font-mono text-sm"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                    <Layers className="w-3.5 h-3.5" />
+                                    Category
+                                </Label>
+                                <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
+                                    <SelectTrigger className="h-10 rounded-lg bg-muted/40 border-border/60">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Condition */}
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                Condition
+                            </Label>
+                            <Select value={form.condition} onValueChange={v => setForm({ ...form, condition: v })}>
+                                <SelectTrigger className="h-10 rounded-lg bg-muted/40 border-border/60">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CONDITIONS.map(c => (
+                                        <SelectItem key={c} value={c}>
+                                            <span className="flex items-center gap-2">
+                                                <span className={`w-2 h-2 rounded-full ${
+                                                    c === 'Excellent' ? 'bg-emerald-500' :
+                                                    c === 'Good' ? 'bg-teal' :
+                                                    c === 'Fair' ? 'bg-amber-500' :
+                                                    c === 'Poor' ? 'bg-orange-500' :
+                                                    c === 'Damaged' ? 'bg-red-500' : 'bg-slate-400'
+                                                }`} />
+                                                {c}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Description (optional) */}
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5" />
+                                Notes
+                                <span className="text-[10px] font-normal text-muted-foreground/60 ml-1">optional</span>
+                            </Label>
+                            <Textarea
+                                value={form.description}
+                                onChange={e => setForm({ ...form, description: e.target.value })}
+                                placeholder="Additional details about this asset..."
+                                rows={2}
+                                className="rounded-lg bg-muted/40 border-border/60 focus-visible:bg-background transition-colors resize-none text-sm"
+                            />
+                        </div>
+
+                        {/* Live Preview Strip */}
+                        {form.name && (
+                            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/50 border border-border/40">
+                                <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm font-semibold text-foreground truncate">{form.name}</span>
+                                {form.asset_code && (
+                                    <Badge variant="outline" className="ml-auto text-[10px] font-mono flex-shrink-0">
+                                        {form.asset_code}
+                                    </Badge>
+                                )}
+                                {form.condition && (
+                                    <Badge className={`text-[10px] border flex-shrink-0 ${CONDITION_COLORS[form.condition] || 'bg-muted text-muted-foreground'}`}>
+                                        {form.condition}
+                                    </Badge>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Footer Actions */}
+                    <div className="px-6 py-4 flex items-center justify-end gap-3 bg-muted/30">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setShowModal(false)}
+                            className="h-9 px-4 text-sm font-medium text-muted-foreground hover:text-foreground"
+                        >
+                            Cancel
                         </Button>
-                        <Button variant="ghost" onClick={() => setShowModal(false)} className="text-slate-400 font-bold uppercase text-[10px]">Cancel</Button>
+                        <Button
+                            onClick={handleSave}
+                            disabled={saving || !form.name || !form.asset_code}
+                            className="h-9 px-6 bg-teal hover:bg-teal/90 text-white font-semibold rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {saving ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Saving...
+                                </span>
+                            ) : (
+                                editing ? 'Save Changes' : 'Register Asset'
+                            )}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
