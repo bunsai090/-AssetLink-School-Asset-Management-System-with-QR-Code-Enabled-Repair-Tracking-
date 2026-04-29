@@ -5,9 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { 
-    Shield, Eye, EyeOff, Loader2, Mail, Lock, ArrowLeft 
+    Shield, Eye, EyeOff, Loader2, Mail, Lock, ArrowLeft, Clock, AlertCircle 
 } from 'lucide-react';
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { 
+    Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter
+} from '@/components/ui/dialog';
 import { sileo } from "sileo";
 import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -19,6 +22,10 @@ export default function LocalLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Check if we just came from a successful registration
+    const [showPendingModal, setShowPendingModal] = useState(location.state?.registrationPending || false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -88,6 +95,39 @@ export default function LocalLogin() {
     return (
         <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-emerald-100">
             
+            {/* REGISTRATION PENDING MODAL */}
+            <Dialog open={showPendingModal} onOpenChange={setShowPendingModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-amber-500" />
+                            Account Pending
+                        </DialogTitle>
+                        <DialogDescription>
+                            Your registration was successful, but your account requires verification.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex bg-amber-50 border border-amber-200 p-4 rounded-md items-start gap-3 mt-2">
+                        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-amber-900 leading-none">
+                                Pending Approval
+                            </p>
+                            <p className="text-sm text-amber-700 leading-relaxed mt-1">
+                                For security purposes, your registration needs to be verified by the Principal or System Admin before you can log in.
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-4">
+                        <Button type="button" onClick={() => setShowPendingModal(false)} className="w-full sm:w-auto">
+                            Understood
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* BACK BUTTON */}
             <div className="absolute top-8 left-8 z-10">
                 <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors group">
