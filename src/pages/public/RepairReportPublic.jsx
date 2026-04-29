@@ -62,16 +62,35 @@ export default function RepairReportPublic() {
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
                     .no-print { display: none !important; }
-                    body { background: white !important; padding: 0 !important; }
-                    .print-container { 
-                        box-shadow: none !important; 
-                        border: none !important; 
-                        max-width: 100% !important; 
-                        width: 100% !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .report-card { border: 1px solid #e2e8f0 !important; page-break-inside: avoid; }
+                    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+                    
+                    /* Force content into one page */
+                    html, body { height: 99%; overflow: hidden; }
+                    
+                    .max-w-2xl { max-width: 100% !important; width: 100% !important; padding: 0.5in !important; margin: 0 !important; }
+                    
+                    /* Shrink spacing */
+                    main.space-y-6 { gap: 0.75rem !important; margin-top: 0 !important; }
+                    .p-8 { padding: 1.25rem !important; }
+                    .p-6 { padding: 1rem !important; }
+                    .rounded-[2.5rem], .rounded-3xl { border-radius: 1rem !important; }
+                    
+                    /* Shrink typography */
+                    h1.text-3xl { font-size: 1.5rem !important; }
+                    h2.text-4xl { font-size: 1.75rem !important; }
+                    .text-sm { font-size: 0.75rem !important; }
+                    .text-base { font-size: 0.85rem !important; }
+                    .text-2xl { font-size: 1.25rem !important; }
+                    
+                    /* Optimize image for space */
+                    img { max-height: 2.5in !important; object-fit: contain !important; }
+                    
+                    /* Compact grid */
+                    .grid { gap: 0.75rem !important; }
+                    
+                    /* Shrink footer */
+                    .pt-8 { padding-top: 1rem !important; }
+                    .mt-4 { margin-top: 0.5rem !important; }
                 }
             `}} />
 
