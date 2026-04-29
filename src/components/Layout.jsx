@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import {
     LayoutDashboard, Package, AlertTriangle, Wrench, BarChart3,
-    School, Menu, X, Bell, LogOut, ChevronRight, Shield, CalendarDays, ShieldAlert, User
+    School, Menu, X, Bell, LogOut, ChevronRight, Shield, CalendarDays, ShieldAlert, User, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sileo } from 'sileo';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 
 const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'teacher', 'principal', 'maintenance'] },
+    { path: '/users', label: 'Manage Users', icon: Users, roles: ['admin', 'principal'] },
     { path: '/assets', label: 'Assets', icon: Package, roles: ['admin', 'teacher', 'principal'] },
     { path: '/repair-requests', label: 'Repair Requests', icon: AlertTriangle, roles: ['admin', 'teacher', 'principal'] },
     { path: '/report-damage', label: 'Report Damage', icon: AlertTriangle, roles: ['admin', 'teacher'] },
