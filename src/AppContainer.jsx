@@ -17,6 +17,7 @@ import DashboardMaintenance from './pages/maintenance/Dashboard';
 import DashboardPrincipal from './pages/principal/Dashboard';
 import Assets from './pages/admin/Assets';
 import Analytics from './pages/admin/Analytics';
+import UserManagement from './pages/admin/Users';
 import RepairRequestsTeacher from './pages/teacher/RepairRequests';
 import ReportDamage from './pages/teacher/ReportDamage';
 import RepairRequestsPrincipal from './pages/principal/RepairRequests';
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
                 <Route path="/" element={renderDashboard()} />
                 <Route path="/assets" element={<Assets />} />
                 <Route path="/repair-requests" element={renderRepairRequests()} />
+                <Route path="/users" element={<UserManagement />} />
                 <Route path="/report-damage" element={<ReportDamage />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/analytics" element={<Analytics />} />
