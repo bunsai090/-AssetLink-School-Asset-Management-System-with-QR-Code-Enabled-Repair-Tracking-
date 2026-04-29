@@ -40,7 +40,18 @@ export const AuthProvider = ({ children }) => {
                                 type: 'unauthorized_role', 
                                 message: 'The Supervisor role has been discontinued. Please contact your administrator.' 
                             });
-                        } else {
+                        } 
+                        // BLOCK UNAPPROVED USERS (Except Admin)
+                        else if (userData.is_approved === false && userData.role !== 'admin') {
+                            await signOut(auth);
+                            setUser(null);
+                            setIsAuthenticated(false);
+                            setAuthError({ 
+                                type: 'unauthorized_role', 
+                                message: 'Your account is currently PENDING approval. Please wait for the Principal or Admin to verify your registration.' 
+                            });
+                        }
+                        else {
                             setUser({
                                 uid: firebaseUser.uid,
                                 email: firebaseUser.email,
