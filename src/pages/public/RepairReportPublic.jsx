@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { CheckCircle, Wrench, DollarSign, Package, Image } from 'lucide-react';
+import { CheckCircle, Wrench, DollarSign, Package, Image, Printer, ArrowLeft, ShieldCheck, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 export default function RepairReportPublic() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -27,122 +28,200 @@ export default function RepairReportPublic() {
         load();
     }, [requestId]);
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-50">
-            <div className="w-8 h-8 border-4 border-teal/30 border-t-teal rounded-full animate-spin" />
+        <div className="flex items-center justify-center min-h-screen bg-slate-50/50">
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-teal/20 border-t-teal rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Loading Report</p>
+            </div>
         </div>
     );
 
     if (notFound) return (
-        <div className="flex items-center justify-center min-h-screen text-center p-6 bg-slate-50">
-            <div>
-                <Wrench className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-foreground">Report Not Found</h2>
-                <p className="text-muted-foreground mt-2 text-sm">This repair report does not exist or has been removed.</p>
+        <div className="flex items-center justify-center min-h-screen text-center p-6 bg-slate-50/50">
+            <div className="max-w-sm">
+                <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <Wrench className="w-10 h-10 text-slate-300" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Report Not Found</h2>
+                <p className="text-slate-500 mt-3 text-sm leading-relaxed">This repair report link is invalid or the record has been archived. Please contact your administrator.</p>
+                <Button variant="outline" className="mt-8 rounded-xl px-8 font-bold" onClick={() => window.history.back()}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Go Back
+                </Button>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* Header */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-teal flex items-center justify-center shadow-sm">
-                    <Wrench className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                    <p className="font-black text-slate-800 text-sm tracking-tight">AssetLink</p>
-                    <p className="text-xs text-slate-400 -mt-0.5">Repair Completion Report</p>
-                </div>
-                <div className="ml-auto">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-teal bg-teal/10 px-3 py-1.5 rounded-full border border-teal/20">
-                        {report.status}
-                    </span>
-                </div>
-            </div>
+        <div className="min-h-screen bg-[#f8fafc] print:bg-white pb-12">
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: white !important; padding: 0 !important; }
+                    .print-container { 
+                        box-shadow: none !important; 
+                        border: none !important; 
+                        max-width: 100% !important; 
+                        width: 100% !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .report-card { border: 1px solid #e2e8f0 !important; page-break-inside: avoid; }
+                }
+            `}} />
 
-            <div className="max-w-lg mx-auto p-6 space-y-5">
-                {/* Title */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Asset Repaired</p>
-                    <h1 className="text-xl font-black text-slate-800 uppercase tracking-tight">{report.asset_name}</h1>
-                    {report.request_number && (
-                        <span className="inline-block mt-2 text-[10px] font-black text-teal bg-teal/5 px-2 py-1 rounded-lg border border-teal/10 uppercase tracking-widest">
-                            Ref: #{report.request_number}
-                        </span>
-                    )}
-                    {report.school_name && (
-                        <p className="text-xs text-slate-400 mt-2 font-medium">{report.school_name}</p>
-                    )}
-                </div>
-
-                {/* Damage Report */}
-                <div className="bg-amber-50 rounded-2xl border border-amber-100 p-5">
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">Original Damage Report</p>
-                    <p className="text-sm font-medium text-amber-900 italic leading-relaxed">"{report.description}"</p>
-                    <p className="text-[10px] font-bold text-amber-600/70 mt-2">— Reported by {report.reported_by_name || 'Teacher'}</p>
-                </div>
-
-                {/* Staff Report */}
-                {report.maintenance_notes && (
-                    <div className="bg-teal-50 rounded-2xl border border-teal-100 p-5">
-                        <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest mb-2">Staff Service Report</p>
-                        <p className="text-sm font-medium text-teal-900 leading-relaxed">"{report.maintenance_notes}"</p>
-                        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-teal-200/50">
-                            <div>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <Package className="w-3.5 h-3.5 text-teal-500" />
-                                    <p className="text-[10px] font-black text-teal-600/70 uppercase tracking-widest">Materials Used</p>
-                                </div>
-                                <p className="text-sm font-bold text-teal-800">{report.materials_used || 'None specified'}</p>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <DollarSign className="w-3.5 h-3.5 text-amber-500" />
-                                    <p className="text-[10px] font-black text-teal-600/70 uppercase tracking-widest">Total Cost</p>
-                                </div>
-                                <p className="text-sm font-black text-amber-600">
-                                    ₱{report.actual_cost?.toLocaleString() || '0'}
-                                </p>
-                            </div>
+            {/* Premium Header */}
+            <header className="no-print sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 sm:px-8 py-4">
+                <div className="max-w-3xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal to-emerald-500 flex items-center justify-center shadow-lg shadow-teal/20">
+                            <ShieldCheck className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="hidden sm:block">
+                            <h1 className="font-black text-slate-900 text-base tracking-tight">AssetLink</h1>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">Verification Gateway</p>
                         </div>
                     </div>
-                )}
 
-                {/* Completion Photo */}
-                {report.completion_photo && (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Image className="w-4 h-4 text-teal" />
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Proof of Completion</p>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            onClick={handlePrint}
+                            className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-5 h-11 font-black uppercase text-[10px] tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-slate-900/10"
+                        >
+                            <Printer className="w-4 h-4 mr-2" />
+                            Print Report
+                        </Button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Report Content */}
+            <main className="max-w-2xl mx-auto p-4 sm:p-8 space-y-6 print:p-0 print:space-y-4">
+                
+                {/* Receipt Header (Visible in Print) */}
+                <div className="hidden print:flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-8">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">OFFICIAL SERVICE REPORT</h1>
+                        <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.3em]">AssetLink Management System</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-black text-slate-400 uppercase">Document Ref</p>
+                        <p className="font-black text-slate-900">#{report.request_number || report.id.substring(0, 8)}</p>
+                    </div>
+                </div>
+
+                {/* Status Banner */}
+                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200/60 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <CheckCircle className="w-32 h-32 text-teal" />
+                    </div>
+                    
+                    <div className="relative">
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="flex h-2 w-2 rounded-full bg-teal animate-pulse" />
+                            <p className="text-[10px] font-black text-teal uppercase tracking-[0.2em]">Verified Completion</p>
                         </div>
-                        <div className="rounded-xl overflow-hidden border border-slate-100">
+                        <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-2">
+                            {report.asset_name}
+                        </h2>
+                        <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {report.school_name || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {report.completed_at ? format(report.completed_at.toDate(), 'MMM d, yyyy') : 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
+                    {/* Damage Description */}
+                    <div className="bg-amber-50/50 rounded-3xl p-6 border border-amber-100/60">
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Original Issue</p>
+                        <blockquote className="text-sm font-medium text-amber-900 italic leading-relaxed">
+                            "{report.description}"
+                        </blockquote>
+                        <div className="mt-4 pt-4 border-t border-amber-200/30 flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center text-[10px] font-black text-amber-700 uppercase">
+                                {report.reported_by_name?.charAt(0) || 'T'}
+                            </div>
+                            <p className="text-[10px] font-bold text-amber-700/60 uppercase tracking-widest">Reported by {report.reported_by_name || 'Teacher'}</p>
+                        </div>
+                    </div>
+
+                    {/* Staff Remarks */}
+                    <div className="bg-teal-50/50 rounded-3xl p-6 border border-teal-100/60">
+                        <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest mb-4">Service Remarks</p>
+                        <p className="text-sm font-bold text-teal-900 leading-relaxed">
+                            {report.maintenance_notes || 'Standard maintenance performed.'}
+                        </p>
+                        <div className="mt-4 pt-4 border-t border-teal-200/30">
+                             <p className="text-[10px] font-bold text-teal-700/60 uppercase tracking-widest">Technician Approved</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Financials & Inventory */}
+                <div className="bg-white rounded-3xl p-8 border border-slate-200/60 shadow-sm">
+                    <div className="grid grid-cols-2 gap-8">
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                                    <Package className="w-4 h-4 text-slate-400" />
+                                </div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Materials</p>
+                            </div>
+                            <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                {report.materials_used || 'None'}
+                            </p>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                                    <DollarSign className="w-4 h-4 text-amber-600" />
+                                </div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Audit Cost</p>
+                            </div>
+                            <p className="text-2xl font-black text-slate-900">
+                                ₱{report.actual_cost?.toLocaleString() || '0.00'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Evidence Image */}
+                {report.completion_photo && (
+                    <div className="bg-white rounded-3xl p-4 border border-slate-200/60 shadow-sm print:p-0 print:border-none">
+                         <div className="flex items-center gap-2 mb-4 px-2 no-print">
+                            <Image className="w-4 h-4 text-teal" />
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Physical Evidence</p>
+                        </div>
+                        <div className="rounded-2xl overflow-hidden shadow-inner bg-slate-50">
                             <img
                                 src={report.completion_photo}
                                 alt="Completion proof"
-                                className="w-full h-auto object-cover"
+                                className="w-full h-auto object-cover max-h-[400px]"
                             />
                         </div>
                     </div>
                 )}
 
-                {/* Completion Status */}
-                {report.completed_at && (
-                    <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-5 flex items-center gap-3">
-                        <CheckCircle className="w-8 h-8 text-emerald-500 flex-shrink-0" />
-                        <div>
-                            <p className="text-sm font-black text-emerald-800">Repair Completed</p>
-                            <p className="text-xs text-emerald-600 mt-0.5">
-                                {format(report.completed_at.toDate(), 'MMMM d, yyyy · h:mm a')}
-                            </p>
-                        </div>
+                {/* Verification Footer */}
+                <div className="flex flex-col items-center pt-8 border-t border-dashed border-slate-200">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-6 h-6 text-slate-300" />
                     </div>
-                )}
-
-                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest pb-4">
-                    AssetLink · School Asset Management System
-                </p>
-            </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] text-center max-w-[250px] leading-relaxed">
+                        AssetLink Secure Verification Page · Do not share sensitive repair logs
+                    </p>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase mt-4">
+                        Report Generated: {format(new Date(), 'MMMM d, yyyy · p')}
+                    </p>
+                </div>
+            </main>
         </div>
     );
 }
+
