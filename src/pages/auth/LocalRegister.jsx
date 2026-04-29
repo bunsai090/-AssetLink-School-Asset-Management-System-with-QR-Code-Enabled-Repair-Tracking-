@@ -13,6 +13,10 @@ import {
 import { sileo } from "sileo";
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { 
+    Dialog, DialogContent, DialogHeader, DialogTitle, 
+    DialogDescription, DialogFooter 
+} from '@/components/ui/dialog';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import gsap from 'gsap';
 
@@ -53,12 +57,38 @@ export default function LocalRegister() {
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleStep2Continue = () => {
         if (formData.password !== formData.confirmPassword) {
             sileo.error({ title: 'Mismatch', description: 'Passwords do not match.' });
             return;
         }
+
+        if (formData.phoneNumber.length < 11) {
+            sileo.error({ title: 'Invalid Phone Number', description: 'Please enter a valid 11-digit phone number (e.g. 09123456789).' });
+            return;
+        }
+
+        // Password Validation
+        const hasUpperCase = /[A-Z]/.test(formData.password);
+        const hasNumber = /[0-9]/.test(formData.password);
+        if (formData.password.length < 8) {
+            sileo.error({ title: 'Weak Password', description: 'Password must be at least 8 characters long.' });
+            return;
+        }
+        if (!hasUpperCase) {
+            sileo.error({ title: 'Weak Password', description: 'Password must contain at least one uppercase letter.' });
+            return;
+        }
+        if (!hasNumber) {
+            sileo.error({ title: 'Weak Password', description: 'Password must contain at least one number.' });
+            return;
+        }
+
+        nextStep();
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setIsLoading(true);
 
         try {
@@ -94,6 +124,10 @@ export default function LocalRegister() {
             // 3. Immediately Sign Out (since they are pending approval)
             await signOut(auth);
 
+            sileo.success({ 
+                title: 'Account Created', 
+                description: 'Your registration was successful and is now awaiting approval.' 
+            });
             setIsComplete(true);
         } catch (error) {
             console.error("Registration Error:", error);
@@ -107,10 +141,11 @@ export default function LocalRegister() {
         { id: 'maintenance', title: 'Maintenance', icon: <HardHat className="w-6 h-6" />, desc: 'Manage repair tasks and update asset status.' },
     ];
 
-    if (isComplete) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center p-6">
-                <div className="success-content max-w-md w-full text-center space-y-8 bg-slate-50/50 p-10 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/50">
+    return (
+        <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-emerald-100">
+            {/* SUCCESS MODAL */}
+            <Dialog open={isComplete} onOpenChange={(open) => !open && navigate('/login')}>
+                <DialogContent className="sm:max-w-md rounded-[3rem] border-none shadow-2xl p-10 text-center space-y-6">
                     <div className="relative mx-auto w-24 h-24">
                         <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-20" />
                         <div className="relative w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
@@ -119,35 +154,25 @@ export default function LocalRegister() {
                     </div>
                     
                     <div className="space-y-4">
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Account Pending</h1>
+                        <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight text-center">Account Pending</DialogTitle>
                         <div className="bg-amber-100/50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3 text-left">
                             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                             <p className="text-sm font-bold text-amber-900 leading-relaxed">
-                                Your account has been created but is currently <span className="underline">Pending Approval</span>. 
+                                Your account is currently <span className="underline">Pending Approval</span>. 
                             </p>
                         </div>
-                        <p className="text-slate-500 font-medium leading-relaxed">
+                        <DialogDescription className="text-slate-500 font-medium leading-relaxed text-center">
                             For security purposes, your registration needs to be verified by the **Principal** or **System Admin** before you can log in.
-                        </p>
+                        </DialogDescription>
                     </div>
 
                     <Separator className="opacity-50" />
 
-                    <div className="space-y-4">
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">What happens next?</p>
-                        <div className="flex flex-col gap-2">
-                            <Button asChild className="h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all active:scale-95 shadow-xl shadow-slate-900/10">
-                                <Link to="/login">Return to Login</Link>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-emerald-100">
+                    <Button onClick={() => navigate('/login')} className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all active:scale-95 shadow-xl shadow-slate-900/10">
+                        Return to Login
+                    </Button>
+                </DialogContent>
+            </Dialog>
             
             {/* BACK BUTTON */}
             <div className="absolute top-8 left-8 z-10">
@@ -277,6 +302,7 @@ export default function LocalRegister() {
                                                 {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
                                             </button>
                                         </div>
+                                        <p className="text-[10px] text-slate-400 font-bold ml-1">Min. 8 characters with at least one uppercase letter and one number.</p>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
@@ -288,7 +314,7 @@ export default function LocalRegister() {
                                 </div>
                                 <div className="flex gap-4">
                                     <Button variant="ghost" onClick={prevStep} className="flex-1 h-13 font-bold text-slate-500 rounded-xl">Back</Button>
-                                    <Button onClick={nextStep} disabled={!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword} className="flex-[2] h-13 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl gap-2 shadow-lg shadow-green-900/10">Continue <ChevronRight className="w-4 h-4" /></Button>
+                                    <Button onClick={handleStep2Continue} disabled={!formData.firstName || !formData.lastName || !formData.email || !formData.phoneNumber || !formData.password || !formData.confirmPassword} className="flex-[2] h-13 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl gap-2 shadow-lg shadow-green-900/10">Continue <ChevronRight className="w-4 h-4" /></Button>
                                 </div>
                             </div>
                         )}
