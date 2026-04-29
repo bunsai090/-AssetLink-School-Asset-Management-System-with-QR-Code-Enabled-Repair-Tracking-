@@ -8,17 +8,18 @@ import { Separator } from '@/components/ui/separator';
 import { 
     Shield, Eye, EyeOff, Loader2, ChevronRight, ChevronLeft, 
     CheckCircle2, User, Mail, Lock, Phone, MapPin, 
-    GraduationCap, HardHat, UserCog, ArrowLeft 
+    GraduationCap, HardHat, UserCog, ArrowLeft, Clock, AlertCircle
 } from 'lucide-react';
 import { sileo } from "sileo";
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import gsap from 'gsap';
 
 export default function LocalRegister() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [isComplete, setIsComplete] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -36,11 +37,18 @@ export default function LocalRegister() {
 
     // Handle step transitions with GSAP
     useEffect(() => {
-        gsap.fromTo(".step-content", 
-            { x: 20, opacity: 0 }, 
-            { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
-        );
-    }, [currentStep]);
+        if (isComplete) {
+            gsap.fromTo(".success-content", 
+                { scale: 0.9, opacity: 0 }, 
+                { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.7)" }
+            );
+        } else {
+            gsap.fromTo(".step-content", 
+                { x: 20, opacity: 0 }, 
+                { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+            );
+        }
+    }, [currentStep, isComplete]);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -54,31 +62,39 @@ export default function LocalRegister() {
         setIsLoading(true);
 
         try {
-            let user = auth.currentUser;
+            // 0. Check if email already exists in Firestore
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('email', '==', formData.email));
+            const querySnapshot = await getDocs(q);
 
-            if (!user || user.email !== formData.email) {
-                const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-                user = userCredential.user;
+            if (!querySnapshot.empty) {
+                sileo.error({ 
+                    title: 'Email Exists', 
+                    description: 'This email is already registered in our system. Please use a different email or log in.' 
+                });
+                setIsLoading(false);
+                return;
             }
 
+            // 1. Create the Auth User
+            const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+            const user = userCredential.user;
+
+            // 2. Create the Firestore Document with Pending Status
             await setDoc(doc(db, 'users', user.uid), {
                 full_name: `${formData.firstName} ${formData.lastName}`,
                 email: formData.email,
                 phone: formData.phoneNumber,
                 role: formData.role,
+                status: 'Pending',
+                is_approved: false,
                 created_at: serverTimestamp()
             });
 
-            // Wait a tiny bit for Firestore propagation
-            await new Promise(resolve => setTimeout(resolve, 800));
+            // 3. Immediately Sign Out (since they are pending approval)
+            await signOut(auth);
 
-            sileo.success({ 
-                title: 'Registration Complete', 
-                description: `Welcome, ${formData.firstName}! Redirecting...` 
-            });
-            
-            // Navigate to root which will handle role-based redirection
-            navigate('/');
+            setIsComplete(true);
         } catch (error) {
             console.error("Registration Error:", error);
             sileo.error({ title: 'Error', description: error.message });
@@ -89,8 +105,46 @@ export default function LocalRegister() {
     const roles = [
         { id: 'teacher', title: 'Teacher', icon: <GraduationCap className="w-6 h-6" />, desc: 'Report damages and track classroom repairs.' },
         { id: 'maintenance', title: 'Maintenance', icon: <HardHat className="w-6 h-6" />, desc: 'Manage repair tasks and update asset status.' },
-        { id: 'principal', title: 'Principal', icon: <UserCog className="w-6 h-6" />, desc: 'Oversee school assets and monitor maintenance.' },
     ];
+
+    if (isComplete) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center p-6">
+                <div className="success-content max-w-md w-full text-center space-y-8 bg-slate-50/50 p-10 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/50">
+                    <div className="relative mx-auto w-24 h-24">
+                        <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-20" />
+                        <div className="relative w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
+                            <Clock className="w-10 h-10 text-amber-500" />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Account Pending</h1>
+                        <div className="bg-amber-100/50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3 text-left">
+                            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm font-bold text-amber-900 leading-relaxed">
+                                Your account has been created but is currently <span className="underline">Pending Approval</span>. 
+                            </p>
+                        </div>
+                        <p className="text-slate-500 font-medium leading-relaxed">
+                            For security purposes, your registration needs to be verified by the **Principal** or **System Admin** before you can log in.
+                        </p>
+                    </div>
+
+                    <Separator className="opacity-50" />
+
+                    <div className="space-y-4">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">What happens next?</p>
+                        <div className="flex flex-col gap-2">
+                            <Button asChild className="h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all active:scale-95 shadow-xl shadow-slate-900/10">
+                                <Link to="/login">Return to Login</Link>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-emerald-100">
@@ -286,7 +340,7 @@ export default function LocalRegister() {
                 </div>
             </div>
 
-            {/* RIGHT SIDE: ILLUSTRATION (Same as Login for branding consistency) */}
+            {/* RIGHT SIDE: ILLUSTRATION */}
             <div className="hidden md:flex w-[55%] bg-slate-50 items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute top-20 right-20 w-64 h-64 bg-[#028a0f]/5 rounded-full blur-3xl" />
                 <div className="absolute bottom-20 left-20 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
@@ -294,10 +348,8 @@ export default function LocalRegister() {
                     <div className="w-full drop-shadow-2xl">
                         <svg viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
                             <path d="M0 550C200 550 300 400 400 400C500 400 600 500 800 500V600H0V550Z" fill="#F1F5F9" />
-                            <path d="M Sun circle x=500 y=200 r=80" fill="#028a0f" />
                             <circle cx="500" cy="200" r="80" fill="#028a0f" />
                             <path d="M200 550C400 550 500 350 600 350C700 350 750 450 800 450V600H200V550Z" fill="#E2E8F0" />
-                            {/* Illustration path details kept same as login */}
                             <g transform="translate(150, 350)">
                                 <circle cx="40" cy="30" r="15" fill="#334155" />
                                 <path d="M40 45C25 45 15 65 15 100H65C65 65 55 45 40 45Z" fill="#334155" />
@@ -315,23 +367,10 @@ export default function LocalRegister() {
                         <p className="text-slate-500 font-medium max-w-md leading-relaxed">
                             Join AssetLink today and help us build a smarter, more efficient school maintenance system.
                         </p>
-                        <div className="pt-6 flex gap-8">
-                            <div className="space-y-1">
-                                <p className="text-2xl font-black text-slate-800">12K+</p>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Users</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-2xl font-black text-slate-800">450+</p>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Schools</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-2xl font-black text-[#028a0f]">98%</p>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Success Rate</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
