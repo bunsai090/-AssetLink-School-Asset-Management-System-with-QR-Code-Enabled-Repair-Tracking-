@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db, storage } from '@/lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -27,6 +27,9 @@ export default function Tasks() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [saving, setSaving] = useState(false);
     const [filterStatus, setFilterStatus] = useState('all');
+    const [showCamera, setShowCamera] = useState(false);
+    const videoRef = useRef(null);
+    const streamRef = useRef(null);
 
     useEffect(() => {
         if (!currentUser) return;
@@ -108,10 +111,55 @@ export default function Tasks() {
         });
     }
 
-    async function handleFileUpload(e) {
+    async function handleFileChange(e) {
         const rawFile = e.target.files[0];
         if (!rawFile) return;
+        processFile(rawFile);
+    }
 
+    async function startCamera() {
+        setShowCamera(true);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+            }
+            streamRef.current = stream;
+        } catch (err) {
+            console.error("Camera access denied:", err);
+            sileo.error({ title: 'Camera Error', description: 'Could not access the camera. Check permissions.' });
+            setShowCamera(false);
+        }
+    }
+
+    function stopCamera() {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setShowCamera(false);
+    }
+
+    function capturePhoto() {
+        if (!videoRef.current) return;
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+                processFile(file);
+                stopCamera();
+            }
+        }, 'image/jpeg', 0.8);
+    }
+
+    async function processFile(rawFile) {
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
         const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -342,21 +390,29 @@ export default function Tasks() {
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
+                                    ) : uploading ? (
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50">
+                                            <div className="w-8 h-8 border-4 border-teal/20 border-t-teal rounded-full animate-spin mb-2" />
+                                            <span className="text-xs font-bold text-teal">{Math.round(uploadProgress)}% Uploading...</span>
+                                        </div>
+                                    ) : showCamera ? (
+                                        <div className="relative rounded-xl overflow-hidden border-2 border-teal-200 bg-black flex flex-col items-center justify-center min-h-[200px]">
+                                            <video ref={videoRef} className="w-full h-auto max-h-[200px] object-cover" autoPlay playsInline muted />
+                                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+                                                <Button type="button" onClick={stopCamera} variant="destructive" size="sm" className="rounded-full shadow-lg font-black uppercase text-[10px] tracking-widest">Cancel</Button>
+                                                <Button type="button" onClick={capturePhoto} className="bg-teal hover:bg-teal/90 rounded-full shadow-lg font-black uppercase text-[10px] tracking-widest text-white">Capture</Button>
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <div className="relative border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
-                                            <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
-                                            <div className="flex flex-col items-center gap-2">
-                                                {uploading ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="w-8 h-8 border-4 border-teal/20 border-t-teal rounded-full animate-spin mb-2" />
-                                                        <span className="text-xs font-bold text-teal">{Math.round(uploadProgress)}% Uploading...</span>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <UploadCloud className="w-8 h-8 text-slate-300 group-hover:text-teal transition-colors" />
-                                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Click to upload proof</span>
-                                                    </>
-                                                )}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div onClick={startCamera} className="relative border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group flex flex-col items-center justify-center">
+                                                <Camera className="w-8 h-8 text-slate-300 group-hover:text-teal transition-colors mb-2" />
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Open Camera</span>
+                                            </div>
+                                            <div className="relative border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group flex flex-col items-center justify-center">
+                                                <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                                <ImageIcon className="w-8 h-8 text-slate-300 group-hover:text-teal transition-colors mb-2" />
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Upload File</span>
                                             </div>
                                         </div>
                                     )}
