@@ -106,9 +106,14 @@ export default function LocalRegister() {
                 return;
             }
 
-            // 1. Create the Auth User
-            const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-            const user = userCredential.user;
+            // 1. Determine Auth User
+            let user = auth.currentUser;
+            
+            // If the user isn't logged in from Google (or email doesn't match), create a new Auth account
+            if (!user || user.email !== formData.email) {
+                const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+                user = userCredential.user;
+            }
 
             // 2. Create the Firestore Document with Pending Status
             await setDoc(doc(db, 'users', user.uid), {
@@ -128,10 +133,25 @@ export default function LocalRegister() {
                 title: 'Account Created', 
                 description: 'Your registration was successful and is now awaiting approval.' 
             });
-            setIsComplete(true);
+            
+            // Navigate to login with state to show the modal there, preventing unmount race conditions
+            navigate('/login', { state: { registrationPending: true }, replace: true });
+            
         } catch (error) {
             console.error("Registration Error:", error);
-            sileo.error({ title: 'Error', description: error.message });
+            let errorMessage = "An unexpected error occurred during registration.";
+            
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "This email is already registered. Please log in instead.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = "The email address is invalid.";
+            } else if (error.code === 'auth/operation-not-allowed') {
+                errorMessage = "Email/password accounts are not enabled. Contact the admin.";
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            sileo.error({ title: 'Registration Failed', description: errorMessage });
             setIsLoading(false);
         }
     };
@@ -143,36 +163,6 @@ export default function LocalRegister() {
 
     return (
         <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans selection:bg-emerald-100">
-            {/* SUCCESS MODAL */}
-            <Dialog open={isComplete} onOpenChange={(open) => !open && navigate('/login')}>
-                <DialogContent className="sm:max-w-md rounded-[3rem] border-none shadow-2xl p-10 text-center space-y-6">
-                    <div className="relative mx-auto w-24 h-24">
-                        <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-20" />
-                        <div className="relative w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
-                            <Clock className="w-10 h-10 text-amber-500" />
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight text-center">Account Pending</DialogTitle>
-                        <div className="bg-amber-100/50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3 text-left">
-                            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm font-bold text-amber-900 leading-relaxed">
-                                Your account is currently <span className="underline">Pending Approval</span>. 
-                            </p>
-                        </div>
-                        <DialogDescription className="text-slate-500 font-medium leading-relaxed text-center">
-                            For security purposes, your registration needs to be verified by the **Principal** or **System Admin** before you can log in.
-                        </DialogDescription>
-                    </div>
-
-                    <Separator className="opacity-50" />
-
-                    <Button onClick={() => navigate('/login')} className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all active:scale-95 shadow-xl shadow-slate-900/10">
-                        Return to Login
-                    </Button>
-                </DialogContent>
-            </Dialog>
             
             {/* BACK BUTTON */}
             <div className="absolute top-8 left-8 z-10">
