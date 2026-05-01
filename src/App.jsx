@@ -31,6 +31,8 @@ import MaintenanceCalendar from './pages/maintenance/MaintenanceCalendar';
 import AssetPublic from './pages/public/AssetPublic';
 import RepairReportPublic from './pages/public/RepairReportPublic';
 
+import { LifeLine } from "react-loading-indicators";
+
 console.log("--- ASSETLINK APP REFRESHED: VERSION 2.0 ---");
 
 const AuthenticatedApp = () => {
@@ -45,8 +47,11 @@ const AuthenticatedApp = () => {
     // Show loading spinner
     if (isLoadingPublicSettings || isLoadingAuth) {
         return (
-            <div className="fixed inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+            <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-[9999]">
+                <LifeLine color="#32cd32" size="medium" text="" textColor="" />
+                <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">
+                    Loading AssetLink...
+                </p>
             </div>
         );
     }
