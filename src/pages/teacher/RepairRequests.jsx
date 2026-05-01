@@ -291,30 +291,30 @@ export default function TeacherRepairRequests() {
                                     </div>
 
                                     {selected.maintenance_notes && (
-                                        <div className="bg-teal-600 p-8 rounded-[2rem] text-white shadow-xl shadow-teal-600/20 relative overflow-hidden">
+                                        <div className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl shadow-slate-900/20 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-8 opacity-10">
                                                 <Wrench className="w-24 h-24" />
                                             </div>
-                                            <p className="text-[10px] font-black text-teal-100 uppercase tracking-[0.2em] mb-4">Service Resolution Report:</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Service Resolution Report:</p>
                                             <p className="text-lg font-black leading-snug">"{selected.maintenance_notes}"</p>
                                             
-                                            <div className="grid grid-cols-2 gap-8 mt-8 pt-8 border-t border-white/20">
+                                            <div className="grid grid-cols-2 gap-8 mt-8 pt-8 border-t border-white/10">
                                                 <div>
-                                                    <p className="text-[10px] font-black text-teal-200 uppercase tracking-widest mb-1">Parts / Materials</p>
-                                                    <p className="text-sm font-black uppercase">{selected.materials_used || 'General Supplies'}</p>
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Parts / Materials</p>
+                                                    <p className="text-sm font-black uppercase text-slate-100">{selected.materials_used || 'General Supplies'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-black text-teal-200 uppercase tracking-widest mb-1">Labor & Audit Cost</p>
-                                                    <p className="text-xl font-black">₱{selected.actual_cost?.toLocaleString() || '0'}</p>
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labor & Audit Cost</p>
+                                                    <p className="text-xl font-black text-teal">₱{selected.actual_cost?.toLocaleString() || '0'}</p>
                                                 </div>
                                             </div>
                                             
                                             {selected.maintenance_staff_name && (
                                                 <div className="mt-6 flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black uppercase">
+                                                    <div className="w-8 h-8 rounded-full bg-teal flex items-center justify-center text-[10px] font-black uppercase text-white">
                                                         {selected.maintenance_staff_name.charAt(0)}
                                                     </div>
-                                                    <p className="text-[10px] font-black text-teal-50 uppercase tracking-widest">Technician: {selected.maintenance_staff_name}</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician: <span className="text-slate-200">{selected.maintenance_staff_name}</span></p>
                                                 </div>
                                             )}
                                         </div>
@@ -374,11 +374,8 @@ export default function TeacherRepairRequests() {
                                                 <Button
                                                     className="bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest h-11 rounded-xl gap-2 shadow-lg shadow-slate-900/10 transition-all active:scale-95"
                                                     onClick={() => {
-                                                        const url = `${window.location.origin}/repair-report?id=${selected.id}`;
-                                                        const win = window.open(url, '_blank');
-                                                        win.onload = function() {
-                                                            win.print();
-                                                        };
+                                                        const url = `${window.location.origin}/repair-report?id=${selected.id}&print=true`;
+                                                        window.open(url, '_blank');
                                                     }}
                                                 >
                                                     <Printer className="w-4 h-4" />
