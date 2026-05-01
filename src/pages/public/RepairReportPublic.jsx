@@ -69,36 +69,53 @@ export default function RepairReportPublic() {
         <div className="min-h-screen bg-[#f8fafc] print:bg-white pb-12">
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
+                    @page { 
+                        margin: 0; 
+                        size: auto;
+                    }
                     .no-print { display: none !important; }
-                    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+                    body { 
+                        background: white !important; 
+                        padding: 0 !important; 
+                        margin: 0 !important; 
+                    }
+                    
+                    /* Use a wrapper padding to replace browser margins while hiding headers/footers */
+                    main {
+                        padding: 0.75in !important;
+                    }
                     
                     /* Force content into one page */
-                    html, body { min-height: 100%; overflow: visible; }
+                    html, body { height: 100%; overflow: visible; }
                     
-                    .max-w-2xl { max-width: 100% !important; width: 100% !important; padding: 0.5in !important; margin: 0 !important; }
+                    .max-w-2xl { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
                     
-                    /* Shrink spacing */
-                    main.space-y-6 { gap: 0.75rem !important; margin-top: 0 !important; }
-                    .p-8 { padding: 1.25rem !important; }
-                    .p-6 { padding: 1rem !important; }
-                    .rounded-[2.5rem], .rounded-3xl { border-radius: 1rem !important; }
+                    /* Aggressive spacing reduction */
+                    main.space-y-6 { gap: 0.4rem !important; margin-top: 0 !important; }
+                    .p-8 { padding: 0.75rem !important; }
+                    .p-6 { padding: 0.6rem !important; }
+                    .rounded-[2.5rem], .rounded-3xl, .rounded-2xl { border-radius: 0.5rem !important; }
                     
                     /* Shrink typography */
-                    h1.text-3xl { font-size: 1.5rem !important; }
-                    h2.text-4xl { font-size: 1.75rem !important; }
-                    .text-sm { font-size: 0.75rem !important; }
-                    .text-base { font-size: 0.85rem !important; }
-                    .text-2xl { font-size: 1.25rem !important; }
+                    h1.text-3xl { font-size: 1.2rem !important; }
+                    h2.text-4xl { font-size: 1.4rem !important; }
+                    .text-sm { font-size: 0.7rem !important; }
+                    .text-base { font-size: 0.75rem !important; }
+                    .text-lg { font-size: 0.8rem !important; }
+                    .text-2xl { font-size: 1.1rem !important; }
                     
-                    /* Optimize image for space */
-                    img { max-height: 2.5in !important; object-fit: contain !important; }
+                    /* Shrink image significantly for space */
+                    img { max-height: 2.2in !important; object-fit: contain !important; margin: 0 auto !important; }
                     
                     /* Compact grid */
-                    .grid { gap: 0.75rem !important; }
+                    .grid { gap: 0.5rem !important; }
                     
                     /* Shrink footer */
-                    .pt-8 { padding-top: 1rem !important; }
-                    .mt-4 { margin-top: 0.5rem !important; }
+                    .pt-8 { padding-top: 0.5rem !important; border-top-width: 1px !important; }
+                    .mt-4 { margin-top: 0.2rem !important; }
+                    .gap-8 { gap: 1rem !important; }
+                    .mb-8 { margin-bottom: 0.5rem !important; }
+                    .mb-4 { margin-bottom: 0.2rem !important; }
                 }
             `}} />
 
