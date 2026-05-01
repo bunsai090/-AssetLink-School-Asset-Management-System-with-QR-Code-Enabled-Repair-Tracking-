@@ -5,7 +5,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { 
     Users, UserPlus, ShieldCheck, ShieldAlert, Trash2, Search, 
     Filter, MoreVertical, CheckCircle, XCircle, Mail, Phone, 
-    UserCog, HardHat, GraduationCap, Loader2, ArrowRight, Clock, User
+    UserCog, HardHat, GraduationCap, Loader2, ArrowRight, Clock, User,
+    Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export default function UserManagement() {
         password: '',
         phone: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     // Confirm Modal State
     const [confirmModal, setConfirmModal] = useState({
@@ -429,14 +431,23 @@ export default function UserManagement() {
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">Temporary Password</label>
-                                    <Input 
-                                        type="password"
-                                        className="h-11 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
-                                        required
-                                        placeholder="••••••••"
-                                        value={newPrincipal.password}
-                                        onChange={e => setNewPrincipal({...newPrincipal, password: e.target.value})}
-                                    />
+                                    <div className="relative">
+                                        <Input 
+                                            type={showPassword ? "text" : "password"}
+                                            className="h-11 pr-10 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                            required
+                                            placeholder="••••••••"
+                                            value={newPrincipal.password}
+                                            onChange={e => setNewPrincipal({...newPrincipal, password: e.target.value})}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">Phone Number</label>
