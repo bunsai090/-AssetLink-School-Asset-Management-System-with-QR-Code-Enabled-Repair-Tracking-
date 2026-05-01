@@ -315,78 +315,116 @@ export default function UserManagement() {
 
             {/* Create Principal Dialog */}
             <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-                <DialogContent className="sm:max-w-lg rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden bg-slate-50">
-                    <div className="bg-white px-8 py-6 border-b border-slate-100 flex items-center justify-between">
-                        <div>
-                            <DialogTitle className="text-2xl font-black text-slate-900 uppercase tracking-tight">Create New Principal</DialogTitle>
-                            <DialogDescription className="font-medium text-slate-500">Initialize a new principal account for the school.</DialogDescription>
+                <DialogContent className="sm:max-w-[500px] p-0 border-0 shadow-2xl rounded-2xl overflow-hidden bg-white">
+                    {/* Premium Header */}
+                    <div className="px-8 pt-8 pb-6 bg-slate-50/80 border-b border-slate-100">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-teal/10 flex items-center justify-center shrink-0 border border-teal/20 shadow-sm">
+                                <UserPlus className="w-6 h-6 text-teal" />
+                            </div>
+                            <div className="space-y-1 mt-0.5">
+                                <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">
+                                    Create Principal Account
+                                </DialogTitle>
+                                <DialogDescription className="text-sm text-slate-500 font-medium">
+                                    Initialize a new administrator account for the school system.
+                                </DialogDescription>
+                            </div>
                         </div>
                     </div>
                     
                     <form onSubmit={handleCreatePrincipal} className="p-8 space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name</label>
-                                <Input 
-                                    className="h-14 bg-white border-slate-200 rounded-2xl" 
-                                    required
-                                    value={newPrincipal.firstName}
-                                    onChange={e => setNewPrincipal({...newPrincipal, firstName: e.target.value})}
-                                />
+                        <div className="space-y-5">
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">First Name</label>
+                                    <Input 
+                                        className="h-11 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                        required
+                                        placeholder="e.g. John"
+                                        value={newPrincipal.firstName}
+                                        onChange={e => setNewPrincipal({...newPrincipal, firstName: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">Last Name</label>
+                                    <Input 
+                                        className="h-11 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                        required
+                                        placeholder="e.g. Doe"
+                                        value={newPrincipal.lastName}
+                                        onChange={e => setNewPrincipal({...newPrincipal, lastName: e.target.value})}
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
-                                <Input 
-                                    className="h-14 bg-white border-slate-200 rounded-2xl" 
-                                    required
-                                    value={newPrincipal.lastName}
-                                    onChange={e => setNewPrincipal({...newPrincipal, lastName: e.target.value})}
-                                />
+                            
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">Email Address</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input 
+                                        type="email"
+                                        className="h-11 pl-10 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                        required
+                                        placeholder="principal@school.edu"
+                                        value={newPrincipal.email}
+                                        onChange={e => setNewPrincipal({...newPrincipal, email: e.target.value})}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                            <Input 
-                                type="email"
-                                className="h-14 bg-white border-slate-200 rounded-2xl" 
-                                required
-                                value={newPrincipal.email}
-                                onChange={e => setNewPrincipal({...newPrincipal, email: e.target.value})}
-                            />
+
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">Temporary Password</label>
+                                    <Input 
+                                        type="password"
+                                        className="h-11 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                        required
+                                        placeholder="••••••••"
+                                        value={newPrincipal.password}
+                                        onChange={e => setNewPrincipal({...newPrincipal, password: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">Phone Number</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input 
+                                            className="h-11 pl-10 border-slate-200 bg-white hover:bg-slate-50/50 focus:bg-white rounded-xl transition-all shadow-sm" 
+                                            placeholder="+63 900 000 0000"
+                                            value={newPrincipal.phone}
+                                            onChange={e => setNewPrincipal({...newPrincipal, phone: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Temp Password</label>
-                                <Input 
-                                    type="password"
-                                    className="h-14 bg-white border-slate-200 rounded-2xl" 
-                                    required
-                                    value={newPrincipal.password}
-                                    onChange={e => setNewPrincipal({...newPrincipal, password: e.target.value})}
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                                <Input 
-                                    className="h-14 bg-white border-slate-200 rounded-2xl" 
-                                    value={newPrincipal.phone}
-                                    onChange={e => setNewPrincipal({...newPrincipal, phone: e.target.value})}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="pt-4 flex gap-4">
-                            <Button type="button" variant="ghost" onClick={() => setCreateModalOpen(false)} className="flex-1 h-14 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                        <div className="pt-2 flex items-center justify-end gap-3">
+                            <Button 
+                                type="button" 
+                                variant="ghost" 
+                                onClick={() => setCreateModalOpen(false)} 
+                                className="h-11 px-6 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                            >
                                 Cancel
                             </Button>
                             <Button 
                                 type="submit" 
                                 disabled={creatingPrincipal}
-                                className="flex-[2] h-14 bg-teal hover:bg-teal/90 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-teal/20"
+                                className="h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg shadow-slate-900/20 flex items-center gap-2 group"
                             >
-                                {creatingPrincipal ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Initialize Account'}
+                                {creatingPrincipal ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Initializing...
+                                    </>
+                                ) : (
+                                    <>
+                                        Initialize Account
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </form>
