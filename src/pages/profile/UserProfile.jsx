@@ -11,6 +11,16 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     User,
     Mail,
     Phone,
@@ -49,6 +59,7 @@ const UserProfile = () => {
 
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showRemoveDialog, setShowRemoveDialog] = useState(false);
 
     const handleInfoUpdate = async (e) => {
         e.preventDefault();
@@ -161,9 +172,8 @@ const UserProfile = () => {
     };
     
     const handleRemoveImage = async () => {
-        if (!window.confirm("Are you sure you want to remove your profile picture?")) return;
-        
         setIsLoading(true);
+        setShowRemoveDialog(false);
         try {
             await updateProfile(auth.currentUser, { photoURL: "" });
             const userRef = doc(db, 'users', user.uid);
@@ -213,14 +223,39 @@ const UserProfile = () => {
                                 )}
                                 <div className="absolute -bottom-1 -right-1 flex gap-1">
                                     {user?.photoURL && (
-                                        <button
-                                            onClick={handleRemoveImage}
-                                            disabled={isLoading || isUploading}
-                                            className="w-8 h-8 bg-red-500 text-white rounded-full border-2 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
-                                            title="Remove Picture"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        <>
+                                            <button
+                                                onClick={() => setShowRemoveDialog(true)}
+                                                disabled={isLoading || isUploading}
+                                                className="w-8 h-8 bg-red-500 text-white rounded-full border-2 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                                                title="Remove Picture"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+
+                                            <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+                                                <AlertDialogContent className="rounded-[2rem] border-none p-8 max-w-[380px]">
+                                                    <AlertDialogHeader>
+                                                        <div className="w-16 h-16 bg-red-50 rounded-[1.5rem] flex items-center justify-center mb-4 mx-auto">
+                                                            <Trash2 className="w-8 h-8 text-red-500" />
+                                                        </div>
+                                                        <AlertDialogTitle className="text-xl font-black text-center text-slate-900 uppercase tracking-tight">Remove Photo?</AlertDialogTitle>
+                                                        <AlertDialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
+                                                            Are you sure you want to remove your profile picture? This will revert to your default initials.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+                                                        <AlertDialogCancel className="h-12 rounded-xl border-slate-200 font-bold flex-1">Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction 
+                                                            onClick={handleRemoveImage}
+                                                            className="h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold flex-1"
+                                                        >
+                                                            Yes, Remove
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </>
                                     )}
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
