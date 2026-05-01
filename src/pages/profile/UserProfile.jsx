@@ -23,7 +23,9 @@ import {
     EyeOff,
     CheckCircle,
     CircleDot,
-    KeyRound
+    KeyRound,
+    Trash2,
+    Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -157,6 +159,23 @@ const UserProfile = () => {
             toast.error("An unexpected error occurred.");
         }
     };
+    
+    const handleRemoveImage = async () => {
+        if (!window.confirm("Are you sure you want to remove your profile picture?")) return;
+        
+        setIsLoading(true);
+        try {
+            await updateProfile(auth.currentUser, { photoURL: "" });
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, { photoURL: "" });
+            toast.success("Profile picture removed.");
+        } catch (err) {
+            console.error("Remove Image Error:", err);
+            toast.error("Failed to remove profile picture.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const initials = user?.full_name
         ?.split(' ')
@@ -192,13 +211,26 @@ const UserProfile = () => {
                                         <span className="text-white text-[9px] font-black">{uploadProgress}%</span>
                                     </div>
                                 )}
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#028a0f] text-white rounded-full border-4 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
-                                >
-                                    <Camera className="w-4 h-4" />
-                                </button>
+                                <div className="absolute -bottom-1 -right-1 flex gap-1">
+                                    {user?.photoURL && (
+                                        <button
+                                            onClick={handleRemoveImage}
+                                            disabled={isLoading || isUploading}
+                                            className="w-8 h-8 bg-red-500 text-white rounded-full border-2 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                                            title="Remove Picture"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading}
+                                        className="w-9 h-9 bg-[#028a0f] text-white rounded-full border-4 border-background flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md cursor-pointer"
+                                        title="Upload Picture"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
                                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
                             </div>
 
