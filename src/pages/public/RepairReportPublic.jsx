@@ -19,6 +19,14 @@ export default function RepairReportPublic() {
                 const snap = await getDoc(doc(db, 'repair_requests', requestId));
                 if (!snap.exists()) { setNotFound(true); setLoading(false); return; }
                 setReport({ id: snap.id, ...snap.data() });
+                
+                // Handle auto-print if requested in URL
+                if (urlParams.get('print') === 'true') {
+                    // Small delay to ensure images/styles are painted
+                    setTimeout(() => {
+                        window.print();
+                    }, 800);
+                }
             } catch (e) {
                 setNotFound(true);
             } finally {
@@ -65,7 +73,7 @@ export default function RepairReportPublic() {
                     body { background: white !important; padding: 0 !important; margin: 0 !important; }
                     
                     /* Force content into one page */
-                    html, body { height: 99%; overflow: hidden; }
+                    html, body { min-height: 100%; overflow: visible; }
                     
                     .max-w-2xl { max-width: 100% !important; width: 100% !important; padding: 0.5in !important; margin: 0 !important; }
                     
