@@ -70,6 +70,8 @@ class ErrorBoundary extends Component {
   }
 }
 
+import { LifeLine } from "react-loading-indicators";
+
 const AuthenticatedApp = () => {
     const { currentUser, isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
     const role = currentUser?.role || 'teacher';
@@ -85,11 +87,11 @@ const AuthenticatedApp = () => {
 
     if (isLoadingPublicSettings || isLoadingAuth) {
         return (
-            <div className="fixed inset-0 flex items-center justify-center bg-white">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-slate-200 border-t-[#028a0f] rounded-full animate-spin"></div>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Loading AssetLink...</p>
-                </div>
+            <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-[9999]">
+                <LifeLine color="#32cd32" size="medium" text="" textColor="" />
+                <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">
+                    Loading AssetLink...
+                </p>
             </div>
         );
     }
