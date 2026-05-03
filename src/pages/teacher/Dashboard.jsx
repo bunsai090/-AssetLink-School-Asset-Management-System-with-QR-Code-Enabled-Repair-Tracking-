@@ -88,13 +88,15 @@ export default function TeacherDashboard() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                        {greeting()}, <span className="text-foreground font-semibold">{currentUser?.full_name?.split(' ')[0] || 'Teacher'}</span> 👋
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">
+                        {greeting()}, <span className="text-slate-900 font-bold">{currentUser?.full_name?.split(' ')[0] || 'Teacher'}</span>. Track your school assets and reports.
                     </p>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
-                    <p className="text-sm text-muted-foreground">Track your school assets and repair reports.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {needsVerif.length > 0 && (
