@@ -285,7 +285,7 @@ export default function UserManagement() {
     return (
         <div className="space-y-8 animate-fade-in pb-12">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-1.5 h-6 bg-teal rounded-full" />
