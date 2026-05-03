@@ -93,10 +93,13 @@ export default function Analytics() {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Insights on asset management and repair performance</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Insights on asset management and repair performance.</p>
                 </div>
                 <Button variant="outline" className="gap-2 self-start sm:self-auto">
                     <Download className="w-4 h-4" /> Export Report
