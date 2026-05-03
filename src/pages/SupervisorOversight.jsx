@@ -114,10 +114,13 @@ export default function SupervisorOversight() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Oversight Dashboard</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Multi-school repair monitoring & escalation management</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Oversight Dashboard</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Multi-school repair monitoring & escalation management.</p>
                 </div>
             </div>
 
