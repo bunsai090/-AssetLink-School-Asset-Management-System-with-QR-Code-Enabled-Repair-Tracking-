@@ -196,10 +196,14 @@ const UserProfile = () => {
 
     return (
         <div className="space-y-8 animate-fade-in pb-12">
-            {/* ── Page Header ────────────────────────────── */}
-            <div className="space-y-1">
-                <h1 className="text-3xl font-black text-foreground tracking-tight">My Profile</h1>
-                <p className="text-sm text-muted-foreground">Manage your account settings and personal information.</p>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Account Settings</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Manage your account profile and security preferences.</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
