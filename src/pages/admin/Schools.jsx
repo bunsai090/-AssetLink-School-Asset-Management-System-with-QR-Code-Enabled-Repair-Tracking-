@@ -76,13 +76,16 @@ export default function Schools() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Schools</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Manage registered schools in the system</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Schools</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Manage registered schools in the system.</p>
                 </div>
                 {role === 'admin' && (
-                    <Button onClick={openCreate} className="bg-teal hover:bg-teal/90 text-white gap-2">
+                    <Button onClick={openCreate} className="bg-teal hover:bg-teal/90 text-white font-bold h-11 rounded-xl gap-2 shadow-lg shadow-teal/20">
                         <Plus className="w-4 h-4" /> Add School
                     </Button>
                 )}
