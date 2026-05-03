@@ -107,9 +107,12 @@ export default function ReportDamage() {
 
     return (
         <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-8 px-4">
-                <h1 className="text-3xl font-bold text-foreground tracking-tight">Report Damage</h1>
-                <p className="text-muted-foreground mt-1.5 school-subtitle">Capture and describe asset damage to request a repair.</p>
+            <div className="mb-8 px-1">
+                <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1.5 h-6 bg-teal rounded-full" />
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Report Damage</h1>
+                </div>
+                <p className="text-slate-500 text-sm font-medium tracking-tight">Capture and describe asset damage to request a repair.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start px-4">
