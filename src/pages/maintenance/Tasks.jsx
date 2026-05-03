@@ -276,10 +276,15 @@ export default function Tasks() {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="px-1">
-                <h1 className="text-2xl font-bold text-foreground">Maintenance Tasks</h1>
-                <p className="text-muted-foreground text-sm mt-1 tracking-tight">Manage and update your assigned school repair works.</p>
+        <div className="space-y-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Maintenance Tasks</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Manage and update your assigned school repair works.</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
