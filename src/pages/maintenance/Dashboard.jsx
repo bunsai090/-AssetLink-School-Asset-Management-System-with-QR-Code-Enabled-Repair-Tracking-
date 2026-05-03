@@ -76,13 +76,15 @@ export default function MaintenanceDashboard() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                        {greeting()}, <span className="text-foreground font-semibold">{currentUser?.full_name?.split(' ')[0] || 'Staff'}</span> 👋
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Workboard</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">
+                        {greeting()}, <span className="text-slate-900 font-bold">{currentUser?.full_name?.split(' ')[0] || 'Staff'}</span>. Track and manage your assigned tasks.
                     </p>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight">Workboard</h1>
-                    <p className="text-sm text-muted-foreground">Track and manage your assigned maintenance tasks.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {overdue.length > 0 && (
