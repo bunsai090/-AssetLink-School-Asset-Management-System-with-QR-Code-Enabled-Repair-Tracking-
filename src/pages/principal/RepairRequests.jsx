@@ -166,10 +166,15 @@ export default function PrincipalRepairRequests() {
 
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="px-1">
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">Repair Approvals</h1>
-                <p className="text-muted-foreground text-sm mt-1">Review and manage repair requests from teachers.</p>
+        <div className="space-y-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Repair Approvals</h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Review and manage repair requests from teachers.</p>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
