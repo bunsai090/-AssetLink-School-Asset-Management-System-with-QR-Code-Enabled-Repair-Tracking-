@@ -280,12 +280,15 @@ export default function Dashboard() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-1">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                        Welcome back, {currentUser?.full_name?.split(' ')[0] || 'User'} 👋
-                    </h1>
-                    <p className="text-muted-foreground mt-1">Here's what's happening with your school assets today.</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-6 bg-teal rounded-full" />
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                            Welcome, {currentUser?.full_name?.split(' ')[0] || 'User'} 👋
+                        </h1>
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium tracking-tight">Here's what's happening with school assets today.</p>
                 </div>
                 {(role === 'teacher' || role === 'admin') && (
                     <Link to="/report-damage">
