@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isToday } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
 
 const PRIORITY_CONFIG = {
     Critical: { color: 'bg-red-500' },
@@ -44,6 +44,7 @@ function StatCard({ title, value, subtitle, icon: Icon, colorClass, loading }) {
 export default function PrincipalDashboard() {
     const { currentUser } = useAuth();
     const [requests, setRequests] = useState([]);
+    const [pendingUsersCount, setPendingUsersCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     const greeting = () => {
@@ -60,7 +61,17 @@ export default function PrincipalDashboard() {
             setRequests(s.docs.map(d => ({ id: d.id, ...d.data() })));
             setLoading(false);
         });
-        return () => unsub();
+
+        // Fetch pending users count
+        const usersQ = query(collection(db, 'users'), where('is_approved', '==', false));
+        const unsubUsers = onSnapshot(usersQ, s => {
+            setPendingUsersCount(s.docs.length);
+        });
+
+        return () => {
+            unsub();
+            unsubUsers();
+        };
     }, [currentUser]);
 
     const pendingApproval = requests.filter(r => r.status === 'Pending');
@@ -101,7 +112,7 @@ export default function PrincipalDashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Awaiting Approval" value={pendingApproval.length} subtitle="Needs your action"  icon={Clock}         colorClass="bg-amber-100 text-amber-600"   loading={loading} />
+                <StatCard title="Awaiting Approval" value={pendingApproval.length + pendingUsersCount} subtitle="Needs your action"  icon={Clock}         colorClass="bg-amber-100 text-amber-600"   loading={loading} />
                 <StatCard title="In Progress"        value={inProgress.length}      subtitle="Assigned to staff" icon={Wrench}        colorClass="bg-blue-100 text-blue-600"     loading={loading} />
                 <StatCard title="Completed"          value={completed.length}       subtitle="Resolved repairs"  icon={CheckCircle}   colorClass="bg-emerald-100 text-emerald-600" loading={loading} />
             </div>
