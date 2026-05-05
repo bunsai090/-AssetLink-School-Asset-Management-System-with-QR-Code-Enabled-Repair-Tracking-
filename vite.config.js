@@ -16,5 +16,8 @@ export default defineConfig({
             visualEditAgent: true
         }),
         react(),
-    ]
+    ],
+    build: {
+        target: 'esnext'
+    }
 });
