@@ -32,21 +32,44 @@ export default function LocalLogin() {
         setIsLoading(true);
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Check Firestore to verify account approval status
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            if (!userDoc.exists()) {
+                // Auth account exists but no Firestore record — sign out and show error
+                await auth.signOut();
+                sileo.error({ title: 'Account Not Found', description: 'Your account record is missing. Please contact the admin.' });
+                return;
+            }
+
+            const userData = userDoc.data();
+
+            if (userData.is_approved === false && userData.role !== 'admin') {
+                // Account is pending — sign out and show pending modal
+                await auth.signOut();
+                setShowPendingModal(true);
+                return;
+            }
+
+            // Account is approved — proceed to dashboard
             sileo.success({
                 title: 'Login Successful',
-                description: `Welcome back!`
+                description: `Welcome back, ${userData.full_name || user.email}!`
             });
             navigate('/');
-        } catch (error) {
-            let errorMsg = 'Invalid credentials.';
-            if (error.code === 'auth/user-not-found') errorMsg = 'Email not found.';
-            else if (error.code === 'auth/wrong-password') errorMsg = 'Incorrect password.';
 
-            sileo.error({
-                title: 'Login Failed',
-                description: errorMsg
-            });
+        } catch (error) {
+            let errorMsg = 'Invalid credentials. Please check your email and password.';
+            if (error.code === 'auth/user-not-found') errorMsg = 'No account found with this email.';
+            else if (error.code === 'auth/wrong-password') errorMsg = 'Incorrect password.';
+            else if (error.code === 'auth/invalid-credential') errorMsg = 'Invalid email or password.';
+            else if (error.code === 'auth/too-many-requests') errorMsg = 'Too many failed attempts. Please try again later.';
+
+            sileo.error({ title: 'Login Failed', description: errorMsg });
+        } finally {
             setIsLoading(false);
         }
     };
