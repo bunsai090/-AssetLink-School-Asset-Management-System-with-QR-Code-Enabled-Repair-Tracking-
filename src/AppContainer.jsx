@@ -75,17 +75,19 @@ import { LifeLine } from "react-loading-indicators";
 const AuthenticatedApp = () => {
     const { currentUser, isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
     const role = currentUser?.role || 'teacher';
+    const pathname = window.location.pathname;
+    const isAuthRoute = pathname === '/login' || pathname === '/register';
 
     useEffect(() => {
         if (currentUser) {
-            console.log("--- APP_CONTAINER LOADED ---");
-            console.log("Logged in User:", currentUser.email);
-            console.log("User Role:", role);
+            console.log('--- APP_CONTAINER LOADED ---');
+            console.log('Logged in User:', currentUser.email);
+            console.log('User Role:', role);
         }
     }, [currentUser, role]);
 
-
-    if (isLoadingPublicSettings || isLoadingAuth) {
+    // Don't block login/register pages with the global spinner—they work without auth
+    if (!isAuthRoute && (isLoadingPublicSettings || isLoadingAuth)) {
         return (
             <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-[9999]">
                 <LifeLine color="#32cd32" size="medium" text="" textColor="" />
@@ -117,6 +119,19 @@ const AuthenticatedApp = () => {
                     <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Restricted</h1>
                     <p className="text-slate-600 max-w-sm mb-8">{authError.message}</p>
                     <button onClick={() => window.location.href = '/'} className="bg-[#028a0f] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#016d0c] transition-colors">Back to Login</button>
+                </div>
+            );
+        }
+        if (authError.type === 'network_error') {
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+                    <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+                        <ShieldAlert className="w-10 h-10" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">Connection Error</h1>
+                    <p className="text-slate-600 max-w-sm mb-2">{authError.message}</p>
+                    <p className="text-xs text-slate-400 mb-8">Common fix: disable your ad blocker or browser extension for this site.</p>
+                    <button onClick={() => window.location.reload()} className="bg-[#028a0f] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#016d0c] transition-colors">Try Again</button>
                 </div>
             );
         }
