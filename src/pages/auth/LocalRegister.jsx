@@ -6,24 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { 
-    Shield, Eye, EyeOff, Loader2, ChevronRight, ChevronLeft, 
-    CheckCircle2, User, Mail, Lock, Phone, MapPin, 
-    GraduationCap, HardHat, UserCog, ArrowLeft, Clock, AlertCircle
+    Shield, Eye, EyeOff, Loader2, ChevronRight,
+    CheckCircle2, Mail, Lock, Phone,
+    GraduationCap, HardHat, ArrowLeft
 } from 'lucide-react';
 import { sileo } from "sileo";
-import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { 
-    Dialog, DialogContent, DialogHeader, DialogTitle, 
-    DialogDescription, DialogFooter 
-} from '@/components/ui/dialog';
-import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import gsap from 'gsap';
+
+const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
+const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
 
 export default function LocalRegister() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const [isComplete, setIsComplete] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -41,18 +38,11 @@ export default function LocalRegister() {
 
     // Handle step transitions with GSAP
     useEffect(() => {
-        if (isComplete) {
-            gsap.fromTo(".success-content", 
-                { scale: 0.9, opacity: 0 }, 
-                { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.7)" }
-            );
-        } else {
-            gsap.fromTo(".step-content", 
-                { x: 20, opacity: 0 }, 
-                { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
-            );
-        }
-    }, [currentStep, isComplete]);
+        gsap.fromTo(".step-content", 
+            { x: 20, opacity: 0 }, 
+            { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+        );
+    }, [currentStep]);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -69,17 +59,15 @@ export default function LocalRegister() {
         }
 
         // Password Validation
-        const hasUpperCase = /[A-Z]/.test(formData.password);
-        const hasNumber = /[0-9]/.test(formData.password);
         if (formData.password.length < 8) {
             sileo.error({ title: 'Weak Password', description: 'Password must be at least 8 characters long.' });
             return;
         }
-        if (!hasUpperCase) {
+        if (!/[A-Z]/.test(formData.password)) {
             sileo.error({ title: 'Weak Password', description: 'Password must contain at least one uppercase letter.' });
             return;
         }
-        if (!hasNumber) {
+        if (!/[0-9]/.test(formData.password)) {
             sileo.error({ title: 'Weak Password', description: 'Password must contain at least one number.' });
             return;
         }
@@ -87,71 +75,103 @@ export default function LocalRegister() {
         nextStep();
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         setIsLoading(true);
 
         try {
-            // 0. Check if email already exists in Firestore
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('email', '==', formData.email));
-            const querySnapshot = await getDocs(q);
+            let uid, idToken;
 
-            if (!querySnapshot.empty) {
-                sileo.error({ 
-                    title: 'Email Exists', 
-                    description: 'This email is already registered in our system. Please use a different email or log in.' 
-                });
-                setIsLoading(false);
-                return;
+            // ── STEP 1: Resolve Auth User ────────────────────────────────────────
+            // Two paths:
+            //  A) Google Sign In flow: user is already authenticated (auth.currentUser
+            //     exists with the same email). We reuse their uid + get a fresh idToken.
+            //  B) New email/password user: create via REST API (doesn't fire
+            //     onAuthStateChanged, so AuthContext never interferes).
+
+            const currentUser = auth.currentUser;
+
+            if (currentUser && currentUser.email === formData.email) {
+                // Path A — Google user already exists in Auth
+                uid = currentUser.uid;
+                idToken = await currentUser.getIdToken(true);
+            } else {
+                // Path B — Brand new email/password registration
+                const signUpRes = await fetch(
+                    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: formData.email,
+                            password: formData.password,
+                            returnSecureToken: true
+                        })
+                    }
+                );
+
+                const signUpData = await signUpRes.json();
+
+                if (!signUpRes.ok) {
+                    const code = signUpData?.error?.message || '';
+                    let msg = 'An error occurred during registration.';
+                    if (code.includes('EMAIL_EXISTS')) msg = 'This email is already registered. Please log in instead.';
+                    else if (code.includes('INVALID_EMAIL')) msg = 'The email address is not valid.';
+                    else if (code.includes('WEAK_PASSWORD')) msg = 'Password must be at least 6 characters.';
+                    else if (code.includes('OPERATION_NOT_ALLOWED')) msg = 'Email/password sign-up is not enabled. Contact the admin.';
+                    throw new Error(msg);
+                }
+
+                uid = signUpData.localId;
+                idToken = signUpData.idToken;
             }
 
-            // 1. Determine Auth User
-            let user = auth.currentUser;
-            
-            // If the user isn't logged in from Google (or email doesn't match), create a new Auth account
-            if (!user || user.email !== formData.email) {
-                const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-                user = userCredential.user;
+            // ── STEP 2: Write Firestore document via REST API ────────────────────
+            // Pure HTTP — completely bypasses the Firestore SDK auth-state machinery.
+            const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}`;
+            const firestoreRes = await fetch(firestoreUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    fields: {
+                        full_name:   { stringValue: `${formData.firstName} ${formData.lastName}` },
+                        email:       { stringValue: formData.email },
+                        phone:       { stringValue: formData.phoneNumber },
+                        role:        { stringValue: formData.role },
+                        status:      { stringValue: 'Pending' },
+                        is_approved: { booleanValue: false },
+                        created_at:  { timestampValue: new Date().toISOString() }
+                    }
+                })
+            });
+
+            if (!firestoreRes.ok) {
+                const fsErr = await firestoreRes.json().catch(() => ({}));
+                throw new Error(fsErr?.error?.message || 'Failed to save your profile. Please try again.');
             }
 
-            // 2. Create the Firestore Document with Pending Status
-            await setDoc(doc(db, 'users', user.uid), {
-                full_name: `${formData.firstName} ${formData.lastName}`,
-                email: formData.email,
-                phone: formData.phoneNumber,
-                role: formData.role,
-                status: 'Pending',
-                is_approved: false,
-                created_at: serverTimestamp()
+            // ── STEP 3: Sign out (account needs admin approval) ──────────────────
+            // For Google users (Path A) who are currently signed in, we must sign
+            // them out because their account is pending approval.
+            await signOut(auth).catch(() => {});
+
+            // ── STEP 4: Navigate to login with pending modal ─────────────────────
+            sileo.success({
+                title: 'Account Created!',
+                description: 'Your registration is awaiting approval by the admin.'
             });
 
-            // 3. Immediately Sign Out (since they are pending approval)
-            await signOut(auth);
-
-            sileo.success({ 
-                title: 'Account Created', 
-                description: 'Your registration was successful and is now awaiting approval.' 
-            });
-            
-            // Navigate to login with state to show the modal there, preventing unmount race conditions
             navigate('/login', { state: { registrationPending: true }, replace: true });
-            
-        } catch (error) {
-            console.error("Registration Error:", error);
-            let errorMessage = "An unexpected error occurred during registration.";
-            
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = "This email is already registered. Please log in instead.";
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = "The email address is invalid.";
-            } else if (error.code === 'auth/operation-not-allowed') {
-                errorMessage = "Email/password accounts are not enabled. Contact the admin.";
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
 
-            sileo.error({ title: 'Registration Failed', description: errorMessage });
+        } catch (error) {
+            console.error('[Register] Error:', error);
+            sileo.error({
+                title: 'Registration Failed',
+                description: error.message || 'An unexpected error occurred.'
+            });
+        } finally {
             setIsLoading(false);
         }
     };
@@ -342,7 +362,7 @@ export default function LocalRegister() {
 
                                 <div className="flex gap-4">
                                     <Button variant="ghost" onClick={prevStep} className="flex-1 h-13 font-bold text-slate-500 rounded-xl" disabled={isLoading}>Back</Button>
-                                    <Button onClick={handleSubmit} disabled={isLoading} className="flex-[2] h-13 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl shadow-lg shadow-green-900/10">
+                                    <Button onClick={() => handleSubmit()} disabled={isLoading} className="flex-[2] h-13 bg-[#028a0f] hover:bg-[#016d0c] text-white font-bold rounded-xl shadow-lg shadow-green-900/10">
                                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete Registration'}
                                     </Button>
                                 </div>
