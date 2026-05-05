@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
 import { useAuth } from '@/lib/AuthContext';
 import StatusBadge from '../../components/StatusBadge';
 import {
@@ -52,6 +52,7 @@ function StatCard({ title, value, subtitle, icon: Icon, colorClass, loading }) {
 export default function AdminDashboard() {
     const { currentUser } = useAuth();
     const [requests, setRequests] = useState([]);
+    const [pendingUsersCount, setPendingUsersCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     const greeting = () => {
@@ -68,7 +69,17 @@ export default function AdminDashboard() {
             setRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             setLoading(false);
         });
-        return () => unsubscribe();
+
+        // Fetch pending users count
+        const usersQ = query(collection(db, 'users'), where('is_approved', '==', false));
+        const unsubUsers = onSnapshot(usersQ, s => {
+            setPendingUsersCount(s.docs.length);
+        });
+
+        return () => {
+            unsubscribe();
+            unsubUsers();
+        };
     }, [currentUser]);
 
     const pendingApproval = requests.filter(r => r.status === 'Pending');
@@ -114,7 +125,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Awaiting Approval"
-                    value={pendingApproval.length}
+                    value={pendingApproval.length + pendingUsersCount}
                     subtitle="Needs your action"
                     icon={Clock}
                     colorClass="bg-amber-100 text-amber-600"
