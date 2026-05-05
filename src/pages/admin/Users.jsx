@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { db, auth } from '@/lib/firebase';
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/lib/AuthContext';
 import { 
     Users, UserPlus, ShieldCheck, ShieldAlert, Trash2, Search, 
@@ -22,13 +22,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { sileo } from 'sileo';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+// Note: we do NOT use createUserWithEmailAndPassword here because it would
+// sign out the current admin. We use the REST API instead.
 import { 
     Tabs, 
     TabsContent, 
     TabsList, 
     TabsTrigger 
 } from '@/components/ui/tabs';
+
+const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
+const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
 
 export default function UserManagement() {
     const { currentUser } = useAuth();
@@ -120,42 +124,72 @@ export default function UserManagement() {
         e.preventDefault();
         setCreatingPrincipal(true);
         try {
-            // Check if email exists
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('email', '==', newPrincipal.email));
+            // Check if email already exists in Firestore
+            const q = query(collection(db, 'users'), where('email', '==', newPrincipal.email));
             const querySnapshot = await getDocs(q);
-
             if (!querySnapshot.empty) {
                 sileo.error({ title: 'Error', description: 'This email is already in use.' });
-                setCreatingPrincipal(false);
                 return;
             }
 
-            // Note: In a real app, this should be a cloud function to avoid signing out the current admin
-            // But since this is a local demo/prototype environment, we'll simulate the creation
-            // or use a separate auth instance if available. 
-            // For now, we'll create the user document directly (Auth would need admin SDK)
-            
-            // SIMULATION for prototype: 
-            // In production, use Firebase Admin SDK or a Cloud Function.
-            const tempPassword = newPrincipal.password || 'Principal123!';
-            
-            // We'll create the doc, assuming the admin will handle the Auth part later or using a special flow
-            const newId = `principal_${Date.now()}`;
-            await setDoc(doc(db, 'users', newId), {
-                full_name: `${newPrincipal.firstName} ${newPrincipal.lastName}`,
-                email: newPrincipal.email,
-                phone: newPrincipal.phone,
-                role: 'principal',
-                is_approved: true,
-                status: 'Approved',
-                created_at: serverTimestamp(),
-                created_by_admin: true
+            // ── STEP 1: Create Firebase Auth account via REST API ────────────────
+            // We use the REST API instead of the Firebase SDK so we don't sign
+            // out the currently logged-in admin.
+            const signUpRes = await fetch(
+                `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: newPrincipal.email,
+                        password: newPrincipal.password,
+                        returnSecureToken: true
+                    })
+                }
+            );
+
+            const signUpData = await signUpRes.json();
+
+            if (!signUpRes.ok) {
+                const code = signUpData?.error?.message || '';
+                let msg = 'Failed to create account.';
+                if (code.includes('EMAIL_EXISTS')) msg = 'This email is already registered in the authentication system.';
+                else if (code.includes('WEAK_PASSWORD')) msg = 'Password is too weak. Use at least 6 characters.';
+                throw new Error(msg);
+            }
+
+            const { localId: uid, idToken } = signUpData;
+
+            // ── STEP 2: Write Firestore document with the real Firebase Auth UID ──
+            const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${uid}`;
+            const firestoreRes = await fetch(firestoreUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    fields: {
+                        full_name:        { stringValue: `${newPrincipal.firstName} ${newPrincipal.lastName}` },
+                        email:            { stringValue: newPrincipal.email },
+                        phone:            { stringValue: newPrincipal.phone || '' },
+                        role:             { stringValue: 'principal' },
+                        is_approved:      { booleanValue: true },
+                        status:           { stringValue: 'Approved' },
+                        created_at:       { timestampValue: new Date().toISOString() },
+                        created_by_admin: { booleanValue: true }
+                    }
+                })
             });
+
+            if (!firestoreRes.ok) {
+                const fsErr = await firestoreRes.json().catch(() => ({}));
+                throw new Error(fsErr?.error?.message || 'Failed to save principal data.');
+            }
 
             sileo.success({ 
                 title: 'Principal Created', 
-                description: `Account for ${newPrincipal.firstName} has been initialized.` 
+                description: `${newPrincipal.firstName} can now log in with the provided credentials.`
             });
             setCreateModalOpen(false);
             setNewPrincipal({ firstName: '', lastName: '', email: '', password: '', phone: '' });
